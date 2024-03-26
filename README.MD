@@ -29,7 +29,7 @@ Run the following in a terminal once you have met the requriements above:
     cd libttdat
     make
 
-There is no install target in the makefile yet as this doesn't really do much yet.
+There is no install target in the makefile yet as this doesn't really do much.
 
 ### Testing
 
