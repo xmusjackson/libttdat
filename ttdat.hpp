@@ -50,14 +50,14 @@ class TTDat {
         void _openDatFile(std::string /*datFileName*/);
 
         void getDatInfo();
-
-        char* longToStr(u_int32_t);
+        
+        void getHdrInfo();
 
         bool checkCMP2();
         
         bool checkHdrFile();
 
-        bool isNewFormat(infoLoc);
+        bool isNewFormat();
 
         std::string toUpper(std::string&);
     
@@ -72,11 +72,13 @@ class TTDat {
 
         bool hasHdr() { return this->infoLocType;};
 
+        static char* longToStr(u_int32_t);
+
         int fileNamesOffset;
 
         u_int32_t fileCount;
 
-        u_int32_t typeBoh;
+        int infoType;
 
         int hdrSize;
 

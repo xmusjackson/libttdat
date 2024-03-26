@@ -7,7 +7,7 @@ TTDat::TTDat(std::string filePath, std::string fileName) {
     this->infoOffset = 0;
     this->infoSize = 0;
     this->fileCount = 0;
-    this->typeBoh = 0;
+    this->infoType = 0;
     this->errorState = NO_ERROR;
     this->datFilePath = filePath;
     this->datFileName = fileName;
@@ -26,21 +26,19 @@ TTDat::TTDat(std::string filePath, std::string fileName) {
 
     //int nameFieldSize = 8;
 
-    int type;
-
     switch (this->infoLocType) {
         case DAT:
             this->getDatInfo();
 
-            type = this->getLongInt(this->datFile, this->infoOffset);
-            this->fileCount = this->getLongInt(this->datFile, this->infoOffset + 4);
-            if (type <= -5)
+            if (this->infoType <= -5)
                 //nameFieldSize = 12;
-
-            this->isNewFormat(DAT);
+            
+            this->newFormat = this->isNewFormat();
 
             break;
         case HDR:
+            this->getHdrInfo();
+            this->newFormat = this->isNewFormat();
             break;
         default:
             this->errorState = GENERAL_ERROR; // Until I implement better error handling
@@ -70,9 +68,9 @@ int TTDat::getLongInt(std::ifstream& file, int offset) {
     unsigned char bytes[4];
     int int32 = 0;
 
-    this->datFile.clear();
-    this->datFile.seekg(offset, file.beg);
-    this->datFile.read((char*)bytes, 4);
+    file.clear();
+    file.seekg(offset, file.beg);
+    file.read((char*)bytes, 4);
 
     for (int i = 3; i >= 0; i--)
         int32 = (int32 << 8) + bytes[i];
@@ -84,9 +82,9 @@ int TTDat::getLongIntBE(std::ifstream& file, int offset) {
     unsigned char bytes[4];
     int int32 = 0;
 
-    this->datFile.clear();
-    this->datFile.seekg(offset, file.beg);
-    this->datFile.read((char*)bytes, 4);
+    file.clear();
+    file.seekg(offset, file.beg);
+    file.read((char*)bytes, 4);
 
     for (int i = 0; i <= 3; i++)
         int32 = (int32 << 8) + bytes[i];
@@ -95,43 +93,32 @@ int TTDat::getLongIntBE(std::ifstream& file, int offset) {
 }
 
 int TTDat::getInfoOffset () {
-    if (this->hdrFile.is_open()) {
-        return 0;
-    }
-
     int tmp = getLongInt(this->datFile, 0);
 
-    if (tmp & INFO_AND) {
-        tmp ^= INFO_XOR;
-        tmp <<= INFO_SHIFT;
-        tmp += INFO_ADD;
-    }
+        if (tmp & INFO_AND) {
+            tmp ^= INFO_XOR;
+            tmp <<= INFO_SHIFT;
+            tmp += INFO_ADD;
+        }
 
     return tmp;
 }
 
-int TTDat::getInfoSize() {
-    int tmp = getLongInt(this->datFile, 4);
+bool TTDat::isNewFormat() {
+    char* tmp;
 
-    return tmp;
-}
-
-bool TTDat::isNewFormat(infoLoc loc) {
-    char* fileCountBin;
-    switch (loc) {
-        case DAT:
-            fileCountBin = this->longToStr(this->fileCount);
-            if (strcmp(fileCountBin, "\0x34\0x43\0x43\0x2e") || strcmp(fileCountBin, "\0x2e\0x43\0x43\0x34"))
-                return true;
-
-            break;
-        case HDR:
-
-            break;
-        default:
-            this->errorState = GENERAL_ERROR;
+    if (this->infoLocType) {
+        tmp = this->longToStr(this->infoType);
+    } else {
+        tmp = this->longToStr(this->fileCount);
     }
 
+    if (!strcmp(tmp, "\0x34\0x43\0x43\0x2e") || !strcmp(tmp, "\0x2e\0x43\0x43\0x34")) {
+        free(tmp);
+        return true;
+    }
+
+    free(tmp);
     return false;
 }
 
@@ -169,15 +156,23 @@ bool TTDat::checkHdrFile () {
 }
 
 void TTDat::getDatInfo() {
+        this->infoOffset = this->getInfoOffset();
+        this->infoSize = getLongInt(this->datFile, 4);
+        this->infoType = this->getLongInt(this->datFile, this->infoOffset);
+        this->fileCount = this->getLongInt(this->datFile, this->infoOffset + 4);
+}
 
-    this->infoOffset = this->getInfoOffset();
-    this->infoSize = this->getInfoSize();
+void TTDat::getHdrInfo() {
+        this->infoOffset = 4;
+        this->infoSize = getLongIntBE(this->hdrFile, 0);
+        this->infoType = this->getLongInt(this->hdrFile, this->infoOffset);
+        this->fileCount = this->getLongInt(this->hdrFile, this->infoOffset + 4);
 }
 
 char* TTDat::longToStr(u_int32_t integer) {
     char* intStr = (char*)malloc(4);
-    strcpy(intStr, (char*)&integer);
-
+    strlcpy(intStr, (char*)&integer, 4);
+    
     return intStr;
 }
 
