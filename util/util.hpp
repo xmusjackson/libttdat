@@ -5,6 +5,7 @@
 /* Get a string from the contents of a u_int32_t location. This gets the
    little endian representation.
    Returns: A cstring containing the values from the int's memory location
+   Be sure to free the string!
 */
 char* longToStr(u_int32_t);
 
