@@ -128,9 +128,11 @@ bool TTDat::checkCMP2 () {
 
     if (!strncmp(cmpStr, "CMP2CMP2CMP2CMP2", 16)) {
         this->isCompressed = true;
+        free(cmpStr);
         return true;
     }
-
+    
+    free(cmpStr);
     return false;
 }
 
