@@ -144,12 +144,14 @@ bool TTDat::checkHdrFile () {
 }
 
 void TTDat::getFileInfo() {
+        //int tmpOffset;
         std::ifstream& infoFile = ((this->infoLoc) ? this->hdrFile : this->datFile);
 
         if (this->infoLoc) {
             this->infoOffset = 0;
             this->infoSize = this->getLongIntBE(this->hdrFile, this->infoOffset);
             this->infoType = this->getLongInt(this->hdrFile, this->infoOffset+=4);
+            
             this->fileCount = this->getLongInt(this->hdrFile, this->infoOffset+=4);
             this->infoOffset += 4;
         } else {
@@ -162,11 +164,16 @@ void TTDat::getFileInfo() {
         if ((this->newFormat = this->isNewFormat())) {
             this->infoType = this->getLongIntBE(infoFile, this->infoOffset + 12);
             this->newFormatVersion = getLongIntBE(infoFile, this->infoOffset + 16);
+            
             this->fileCount = this->getLongIntBE(infoFile, this->infoOffset + 20);
             this->fileNameCount = this->getLongIntBE(infoFile, this->infoOffset + 24);
             this->fileNamesSize = this->getLongIntBE(infoFile, this->infoOffset + 28);
-            this->fileNamesOffset = this->infoOffset + 28;
-            this->crcsOffset = this->getLongIntBE(infoFile, this->fileNamesOffset) + this->fileNamesOffset;
+            this->fileNamesOffset = this->infoOffset + 32;
+            
+            this->crcsOffset = this->fileNamesSize + this->fileNamesOffset;
+            this->fileList = (fileData*)malloc(sizeof(fileData) * this->fileNameCount);
+            
+            
         } else {
             if (!(this->infoLoc)) {this->newInfoOffset = 8;}
             this->nameInfoOffset = this->infoOffset + this->newInfoOffset + (this->fileCount * 16);
@@ -181,5 +188,7 @@ void TTDat::getFileInfo() {
             this->fileNamesOffset = (this->fileNameCount * this->nameFieldSize) + this->nameInfoOffset;
             this->fileNamesSize = this->getLongInt(infoFile, this->fileNamesOffset);
             this->crcsOffset = this->getLongInt(infoFile, this->fileNamesOffset) + this->fileNamesOffset + 4;
+            this->nameInfoOffset += 4;
+            this->fileList = (fileData*)malloc(sizeof(fileData) * this->fileNameCount);
         }
 }
