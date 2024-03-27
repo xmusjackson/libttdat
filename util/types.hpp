@@ -1,4 +1,4 @@
-enum infoLoc {
+enum loc {
     DAT = 0,
     HDR = 1
 };

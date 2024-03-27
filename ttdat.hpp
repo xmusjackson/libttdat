@@ -31,11 +31,11 @@ class TTDat {
 
         std::string datFileName;
         
-        fileData* datFileList;
+        fileData* fileList;
         
         fileData* modFileList;
 
-        infoLoc infoLocType;
+        loc infoLoc;
 
         int getLongInt(std::ifstream& /*file*/, int /*offset*/);
 
@@ -49,9 +49,7 @@ class TTDat {
         
         void _openDatFile(std::string /*datFileName*/);
 
-        void getDatInfo();
-        
-        void getHdrInfo();
+        void getFileInfo();
 
         bool checkCMP2();
         
@@ -70,7 +68,7 @@ class TTDat {
 
         void openDatFile(std::string, std::string);
 
-        bool hasHdr() { return this->infoLocType;};
+        bool hasHdr() { return this->infoLoc;};
 
         static char* longToStr(u_int32_t);
 

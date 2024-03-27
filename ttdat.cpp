@@ -24,19 +24,7 @@ TTDat::TTDat(std::string filePath, std::string fileName) {
         this->decompressDat();
     }
 
-    switch (this->infoLocType) {
-        case DAT:
-            this->getDatInfo();
-            break;
-
-        case HDR:
-            this->getHdrInfo();
-            break;
-
-        default:
-            this->errorState = GENERAL_ERROR; // Until I implement better error handling
-            return;
-    }
+    this->getFileInfo();
 }
 
 TTDat::~TTDat(){
@@ -100,12 +88,11 @@ int TTDat::getInfoOffset () {
 
 bool TTDat::isNewFormat() {
     char *infoTypeStr, *fileCountStr;
-        infoTypeStr = this->longToStr(this->infoType);
-
-        fileCountStr = this->longToStr(this->fileCount);
-
-    if ((!strcmp(infoTypeStr, "\0x34\0x43\0x43\0x2e") || !strcmp(infoTypeStr, "\0x2e\0x43\0x43\0x34")) ||
-       (!strcmp(fileCountStr, "\0x34\0x43\0x43\0x2e") || !strcmp(fileCountStr, "\0x2e\0x43\0x43\0x34"))) {
+    infoTypeStr = this->longToStr(this->infoType);
+    fileCountStr = this->longToStr(this->fileCount);
+    
+    if ((!strcmp(infoTypeStr, "\x34\x43\x43\x2e") || !strcmp(infoTypeStr, "\x2e\x43\x43\x34")) ||
+       (!strcmp(fileCountStr, "\x34\x43\x43\x2e") || !strcmp(fileCountStr, "\x2e\x43\x43\x34"))) {
         free(infoTypeStr);
         free(fileCountStr);
         return true;
@@ -143,38 +130,38 @@ bool TTDat::checkHdrFile () {
     this->hdrFile.open(this->datFilePath + hdrFileName);
 
     if (this->hdrFile.is_open()) {
-        this->infoLocType = HDR;
+        this->infoLoc = HDR;
         return true;
     }
     
     this->hdrFile.clear();
-    this->infoLocType = DAT;
+    this->infoLoc = DAT;
     return false;
 }
 
-void TTDat::getDatInfo() {
-        this->infoOffset = this->getInfoOffset();
-        this->infoSize = this->getLongInt(this->datFile, 4);
-        this->infoType = this->getLongInt(this->datFile, this->infoOffset);
-        this->fileCount = this->getLongInt(this->datFile, this->infoOffset + 4);
-        if ((this->newFormat = this->isNewFormat())) {
+void TTDat::getFileInfo() {
 
+        if (this->infoLoc) {
+            this->infoOffset = 4;
+            this->infoSize = this->getLongIntBE(this->hdrFile, 0);
+            this->infoType = this->getLongInt(this->hdrFile, this->infoOffset);
+            this->fileCount = this->getLongInt(this->hdrFile, this->infoOffset + 4);
+        } else {
+            this->infoOffset = this->getInfoOffset();
+            this->infoSize = this->getLongInt(this->datFile, 4);
+            this->fileCount = this->getLongInt(this->datFile, this->infoOffset + 4);
         }
-}
-
-void TTDat::getHdrInfo() {
-        this->infoOffset = 4;
-        this->infoSize = this->getLongIntBE(this->hdrFile, 0);
-        this->infoType = this->getLongInt(this->hdrFile, this->infoOffset);
-        this->fileCount = this->getLongInt(this->hdrFile, this->infoOffset + 4);
+        
         if ((this->newFormat = this->isNewFormat())) {
-
+            
+        } else {
+            
         }
 }
 
 char* TTDat::longToStr(u_int32_t integer) {
-    char* intStr = (char*)malloc(4);
-    strlcpy(intStr, (char*)&integer, 4);
+    char* intStr = (char*)malloc(5);
+    strlcpy(intStr, (char*)&integer, 5);
     
     return intStr;
 }
