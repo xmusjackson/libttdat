@@ -16,6 +16,7 @@ int main (int argc, char** argv) {
     std::cout << "Info Type: " << datFile.infoType << std::endl;
     std::cout << "New Format?: " << (datFile.newFormat ? "True" : "False") << std::endl;
     std::cout << "Has HDR?: " << (datFile.hasHdr() ? "True" : "False") << std::endl;
+    std::cout << "Is Compressed?: " << (datFile.isCompressed ? "True" : "False") << std::endl;
 
     return 0;
 }

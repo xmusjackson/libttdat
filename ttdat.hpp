@@ -90,6 +90,8 @@ class TTDat {
 
         bool newFormat;
 
+        bool isCompressed;
+
         TTDatError errorState;
 
 };

@@ -24,22 +24,15 @@ TTDat::TTDat(std::string filePath, std::string fileName) {
         this->decompressDat();
     }
 
-    //int nameFieldSize = 8;
-
     switch (this->infoLocType) {
         case DAT:
             this->getDatInfo();
-
-            if (this->infoType <= -5)
-                //nameFieldSize = 12;
-            
-            this->newFormat = this->isNewFormat();
-
             break;
+
         case HDR:
             this->getHdrInfo();
-            this->newFormat = this->isNewFormat();
             break;
+
         default:
             this->errorState = GENERAL_ERROR; // Until I implement better error handling
             return;
@@ -78,6 +71,7 @@ int TTDat::getLongInt(std::ifstream& file, int offset) {
     return int32;
 }
 
+/* Reads a long int as big endian */
 int TTDat::getLongIntBE(std::ifstream& file, int offset) {
     unsigned char bytes[4];
     int int32 = 0;
@@ -105,20 +99,20 @@ int TTDat::getInfoOffset () {
 }
 
 bool TTDat::isNewFormat() {
-    char* tmp;
+    char *infoTypeStr, *fileCountStr;
+        infoTypeStr = this->longToStr(this->infoType);
 
-    if (this->infoLocType) {
-        tmp = this->longToStr(this->infoType);
-    } else {
-        tmp = this->longToStr(this->fileCount);
-    }
+        fileCountStr = this->longToStr(this->fileCount);
 
-    if (!strcmp(tmp, "\0x34\0x43\0x43\0x2e") || !strcmp(tmp, "\0x2e\0x43\0x43\0x34")) {
-        free(tmp);
+    if ((!strcmp(infoTypeStr, "\0x34\0x43\0x43\0x2e") || !strcmp(infoTypeStr, "\0x2e\0x43\0x43\0x34")) ||
+       (!strcmp(fileCountStr, "\0x34\0x43\0x43\0x2e") || !strcmp(fileCountStr, "\0x2e\0x43\0x43\0x34"))) {
+        free(infoTypeStr);
+        free(fileCountStr);
         return true;
     }
 
-    free(tmp);
+    free(infoTypeStr);
+    free(fileCountStr);
     return false;
 }
 
@@ -132,7 +126,8 @@ bool TTDat::checkCMP2 () {
     this->datFile.seekg(0);
     this->datFile.read(cmpStr, 16);
 
-    if ((std::string)cmpStr == "CMP2CMP2CMP2CMP2") {
+    if (!strncmp(cmpStr, "CMP2CMP2CMP2CMP2", 16)) {
+        this->isCompressed = true;
         return true;
     }
 
@@ -157,16 +152,22 @@ bool TTDat::checkHdrFile () {
 
 void TTDat::getDatInfo() {
         this->infoOffset = this->getInfoOffset();
-        this->infoSize = getLongInt(this->datFile, 4);
+        this->infoSize = this->getLongInt(this->datFile, 4);
         this->infoType = this->getLongInt(this->datFile, this->infoOffset);
         this->fileCount = this->getLongInt(this->datFile, this->infoOffset + 4);
+        if ((this->newFormat = this->isNewFormat())) {
+
+        }
 }
 
 void TTDat::getHdrInfo() {
         this->infoOffset = 4;
-        this->infoSize = getLongIntBE(this->hdrFile, 0);
+        this->infoSize = this->getLongIntBE(this->hdrFile, 0);
         this->infoType = this->getLongInt(this->hdrFile, this->infoOffset);
         this->fileCount = this->getLongInt(this->hdrFile, this->infoOffset + 4);
+        if ((this->newFormat = this->isNewFormat())) {
+
+        }
 }
 
 char* TTDat::longToStr(u_int32_t integer) {
