@@ -6,6 +6,7 @@ TTDat::TTDat() {
 TTDat::TTDat(std::string filePath, std::string fileName) {
     this->infoOffset = 0;
     this->newInfoOffset = 0;
+    this->nameInfoOffset = 0;
     this->infoSize = 0;
     this->fileCount = 0;
     this->fileNameCount = 0;
@@ -159,7 +160,7 @@ void TTDat::getFileInfo() {
             this->infoType = this->getLongInt(this->datFile, this->infoOffset);
             this->fileCount = this->getLongInt(this->datFile, this->infoOffset + 4);
         }
-
+        
         if ((this->newFormat = this->isNewFormat())) {
             this->infoType = this->getLongIntBE(infoFile, this->infoOffset + 12);
             this->newFormatVersion = getLongIntBE(infoFile, this->infoOffset + 16);
@@ -167,7 +168,7 @@ void TTDat::getFileInfo() {
             this->fileNameCount = this->getLongIntBE(infoFile, this->infoOffset + 24);
             this->fileNamesSize = this->getLongIntBE(infoFile, this->infoOffset + 28);
             this->fileNamesOffset = this->infoOffset + 28;
-            this->nameInfoOffset = this->fileNamesOffset + this->fileNamesSize;
+            this->crcsOffset = this->getLongIntBE(infoFile, this->fileNamesOffset) + this->fileNamesOffset;
         } else {
             if (!(this->infoLoc)) {this->newInfoOffset = 8;}
             this->nameInfoOffset = this->infoOffset + this->newInfoOffset + (this->fileCount * 16);
@@ -181,7 +182,7 @@ void TTDat::getFileInfo() {
             }
             this->fileNamesOffset = (this->fileNameCount * this->nameFieldSize) + this->nameInfoOffset;
             this->fileNamesSize = this->getLongInt(infoFile, this->fileNamesOffset);
-            this->crcsOffset = this->getLongInt(infoFile, this->fileNamesOffset) + this->fileNamesOffset;
+            this->crcsOffset = this->getLongInt(infoFile, this->fileNamesOffset) + this->fileNamesOffset + 4;
         }
 }
 
