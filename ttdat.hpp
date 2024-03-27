@@ -1,12 +1,12 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <cstring>
 #include <filesystem>
-#include <algorithm>
 
 #include "util/types.hpp"
 #include "util/file.hpp"
+#include "util/util.hpp"
+
 
 #define INFO_AND 0x80000000
 #define INFO_XOR 0xFFFFFFFF
@@ -56,8 +56,6 @@ class TTDat {
         bool checkHdrFile();
 
         bool isNewFormat();
-
-        std::string toUpper(std::string&);
     
     public: 
         TTDat();
@@ -69,8 +67,6 @@ class TTDat {
         void openDatFile(std::string, std::string);
 
         bool hasHdr() { return this->infoLoc;};
-
-        static char* longToStr(u_int32_t);
 
         u_int32_t fileCount;
 

@@ -43,8 +43,6 @@ TTDat::~TTDat(){
 
 void TTDat::_openDatFile (std::string fileName){
     this->datFile.open(fileName);
-    if (!this->datFile.is_open())
-        this->errorState = FILE_ERROR;
 }
 
 void TTDat::openDatFile (std::string pathName, std::string fileName){
@@ -94,8 +92,8 @@ int TTDat::getInfoOffset () {
 
 bool TTDat::isNewFormat() {
     char *infoTypeStr, *fileCountStr;
-    infoTypeStr = this->longToStr(this->infoType);
-    fileCountStr = this->longToStr(this->fileCount);
+    infoTypeStr = longToStr(this->infoType);
+    fileCountStr = longToStr(this->fileCount);
     
     if ((!strcmp(infoTypeStr, "\x34\x43\x43\x2e") || !strcmp(infoTypeStr, "\x2e\x43\x43\x34")) ||
        (!strcmp(fileCountStr, "\x34\x43\x43\x2e") || !strcmp(fileCountStr, "\x2e\x43\x43\x34"))) {
@@ -184,17 +182,4 @@ void TTDat::getFileInfo() {
             this->fileNamesSize = this->getLongInt(infoFile, this->fileNamesOffset);
             this->crcsOffset = this->getLongInt(infoFile, this->fileNamesOffset) + this->fileNamesOffset + 4;
         }
-}
-
-char* TTDat::longToStr(u_int32_t integer) {
-    char* intStr = (char*)malloc(5);
-    strlcpy(intStr, (char*)&integer, 5);
-    
-    return intStr;
-}
-
-std::string TTDat::toUpper(std::string& string) {
-    std::transform(string.begin(), string.end(), string.begin(), ::toupper);
-
-    return string;
 }
