@@ -5,12 +5,17 @@ TTDat::TTDat() {
 
 TTDat::TTDat(std::string filePath, std::string fileName) {
     this->infoOffset = 0;
+    this->newInfoOffset = 0;
     this->infoSize = 0;
     this->fileCount = 0;
+    this->fileNameCount = 0;
+    this->fileNamesSize = 0;
+    this->fileNamesOffset = 0;
     this->infoType = 0;
     this->errorState = NO_ERROR;
     this->datFilePath = filePath;
     this->datFileName = fileName;
+    this->isCompressed = false;
     this->_openDatFile(this->datFilePath + this->datFileName);
 
     if (!(this->datFile.is_open())) {
@@ -109,11 +114,11 @@ void TTDat::decompressDat () {
 }
 
 bool TTDat::checkCMP2 () {
-    char* cmpStr = (char*)malloc(16);
+    char* cmpStr = (char*)malloc(17);
     this->datFile.seekg(0);
     this->datFile.read(cmpStr, 16);
 
-    if (!strncmp(cmpStr, "CMP2CMP2CMP2CMP2", 16)) {
+    if (strncmp(cmpStr, "CMP2CMP2CMP2CMP2", 16) == 0) {
         this->isCompressed = true;
         free(cmpStr);
         return true;
@@ -140,22 +145,43 @@ bool TTDat::checkHdrFile () {
 }
 
 void TTDat::getFileInfo() {
+        std::ifstream& infoFile = ((this->infoLoc) ? this->hdrFile : this->datFile);
 
         if (this->infoLoc) {
-            this->infoOffset = 4;
-            this->infoSize = this->getLongIntBE(this->hdrFile, 0);
-            this->infoType = this->getLongInt(this->hdrFile, this->infoOffset);
-            this->fileCount = this->getLongInt(this->hdrFile, this->infoOffset + 4);
+            this->infoOffset = 0;
+            this->infoSize = this->getLongIntBE(this->hdrFile, this->infoOffset);
+            this->infoType = this->getLongInt(this->hdrFile, this->infoOffset+=4);
+            this->fileCount = this->getLongInt(this->hdrFile, this->infoOffset+=4);
+            this->infoOffset += 4;
         } else {
             this->infoOffset = this->getInfoOffset();
             this->infoSize = this->getLongInt(this->datFile, 4);
+            this->infoType = this->getLongInt(this->datFile, this->infoOffset);
             this->fileCount = this->getLongInt(this->datFile, this->infoOffset + 4);
         }
-        
+
         if ((this->newFormat = this->isNewFormat())) {
-            
+            this->infoType = this->getLongIntBE(infoFile, this->infoOffset + 12);
+            this->newFormatVersion = getLongIntBE(infoFile, this->infoOffset + 16);
+            this->fileCount = this->getLongIntBE(infoFile, this->infoOffset + 20);
+            this->fileNameCount = this->getLongIntBE(infoFile, this->infoOffset + 24);
+            this->fileNamesSize = this->getLongIntBE(infoFile, this->infoOffset + 28);
+            this->fileNamesOffset = this->infoOffset + 28;
+            this->nameInfoOffset = this->fileNamesOffset + this->fileNamesSize;
         } else {
-            
+            if (!(this->infoLoc)) {this->newInfoOffset = 8;}
+            this->nameInfoOffset = this->infoOffset + this->newInfoOffset + (this->fileCount * 16);
+            this->fileNameCount = this->getLongInt(infoFile, this->nameInfoOffset);
+            this->nameInfoOffset += 4;
+
+            if (this->infoType <= -5) {
+                this->nameFieldSize = 12;
+            } else {
+                this->nameFieldSize = 8;
+            }
+            this->fileNamesOffset = (this->fileNameCount * this->nameFieldSize) + this->nameInfoOffset;
+            this->fileNamesSize = this->getLongInt(infoFile, this->fileNamesOffset);
+            this->crcsOffset = this->getLongInt(infoFile, this->fileNamesOffset) + this->fileNamesOffset;
         }
 }
 

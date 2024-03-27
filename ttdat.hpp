@@ -72,9 +72,17 @@ class TTDat {
 
         static char* longToStr(u_int32_t);
 
+        u_int32_t fileCount;
+
+        int fileNameCount;
+
+        int fileNamesSize;
+
         int fileNamesOffset;
 
-        u_int32_t fileCount;
+        int nameFieldSize;
+
+        int nameInfoOffset;
 
         int infoType;
 
@@ -84,7 +92,11 @@ class TTDat {
         
         int infoOffset;
 
+        int newInfoOffset;
+
         int infoSize;
+
+        int newFormatVersion;
 
         bool newFormat;
 
