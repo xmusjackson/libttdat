@@ -41,6 +41,24 @@ After building this project:
 
 Replace the filepath with an actual path to a GAME.DAT.
 
+Example output: 
+
+    $ LD_LIBRARY_PATH=build/lib build/bin/libttdat_test /home/christian/steamdir/steamapps/common/The\ LEGO\ Movie\ -\ Videogame/GAME.DAT 
+      Info Offset: 12
+      New Info Offset: 0
+      Info Size: 751320
+      File Count: 12065
+      Info Type: -5
+      New Format?: False
+      Has HDR?: True
+      Is Compressed?: False
+      File Name Count: 14280
+      File Names Offset: 364416
+      File Names Size: 338636
+      CRCs Offset: 703056
+      Name Info Offset: 193056
+
+
 ### Documentation
 
 There is none - yet. I will get to this a little after intial unpacking is implemented.
