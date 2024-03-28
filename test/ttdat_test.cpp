@@ -1,7 +1,23 @@
 #include "../ttdat.hpp"
 
+struct pathAndName {
+    std::string filePath;
+    std::string fileName;
+};
+
+pathAndName getPathAndName(std::string fileAndPath) {
+    pathAndName file;
+    size_t lastSlash = fileAndPath.find_last_of("/\\");
+    size_t length = fileAndPath.length();
+    
+    file.filePath = fileAndPath.substr(0, lastSlash + 1);
+    file.fileName = fileAndPath.substr(lastSlash + 1, length - lastSlash - 1);
+
+    return file;
+}
+
 int main (int argc, char** argv) {
-    pathInfo file;
+    pathAndName file;
     if (argc > 1) {
         file = getPathAndName(argv[1]);
     } else {

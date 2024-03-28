@@ -143,17 +143,28 @@ bool TTDat::checkHdrFile () {
     return false;
 }
 
+char* TTDat::longToStr(u_int32_t integer) {
+    char* intStr = (char*)malloc(5);
+    strlcpy(intStr, (char*)&integer, 5);
+    
+    return intStr;
+}
+
+std::string TTDat::toUpper(std::string& string) {
+    std::transform(string.begin(), string.end(), string.begin(), ::toupper);
+
+    return string;
+}
+
 void TTDat::getFileInfo() {
         //int tmpOffset;
         std::ifstream& infoFile = ((this->infoLoc) ? this->hdrFile : this->datFile);
 
         if (this->infoLoc) {
-            this->infoOffset = 0;
-            this->infoSize = this->getLongIntBE(this->hdrFile, this->infoOffset);
-            this->infoType = this->getLongInt(this->hdrFile, this->infoOffset+=4);
-            
-            this->fileCount = this->getLongInt(this->hdrFile, this->infoOffset+=4);
-            this->infoOffset += 4;
+            this->infoOffset = 12;
+            this->infoSize = this->getLongIntBE(this->hdrFile, 0);
+            this->infoType = this->getLongInt(this->hdrFile, 4);
+            this->fileCount = this->getLongInt(this->hdrFile, 8);
         } else {
             this->infoOffset = this->getInfoOffset();
             this->infoSize = this->getLongInt(this->datFile, 4);
@@ -173,19 +184,21 @@ void TTDat::getFileInfo() {
             this->crcsOffset = this->fileNamesSize + this->fileNamesOffset;
             this->fileList = (fileData*)malloc(sizeof(fileData) * this->fileNameCount);
             
-            
+            //int nameOffset, dirID, fileID;
+            for (int i = 0; i < (this->fileNameCount); i++) {
+                
+            }
         } else {
             if (!(this->infoLoc)) {this->newInfoOffset = 8;}
-            this->nameInfoOffset = this->infoOffset + this->newInfoOffset + (this->fileCount * 16);
-            this->fileNameCount = this->getLongInt(infoFile, this->nameInfoOffset);
-            this->nameInfoOffset += 4;
+            this->nameInfoOffset = this->infoOffset + this->newInfoOffset + (this->fileCount * 16) + 8;
+            this->fileNameCount = this->getLongInt(infoFile, this->nameInfoOffset - 8);
 
             if (this->infoType <= -5) {
                 this->nameFieldSize = 12;
             } else {
                 this->nameFieldSize = 8;
             }
-            this->fileNamesOffset = (this->fileNameCount * this->nameFieldSize) + this->nameInfoOffset;
+            this->fileNamesOffset = (this->fileNameCount * this->nameFieldSize) + this->nameInfoOffset - 4;
             this->fileNamesSize = this->getLongInt(infoFile, this->fileNamesOffset);
             this->crcsOffset = this->getLongInt(infoFile, this->fileNamesOffset) + this->fileNamesOffset + 4;
             this->nameInfoOffset += 4;
