@@ -98,19 +98,19 @@ class TTDat {
 
         int fileNamesSize;
 
-        int fileNamesOffset;
+        long int fileNamesOffset;
 
         int nameFieldSize;
 
-        int nameInfoOffset;
+        long int nameInfoOffset;
 
         int infoType;
 
         int hdrSize;
 
-        int crcsOffset;
+        long int crcsOffset;
         
-        int infoOffset;
+        unsigned int infoOffset;
 
         int newInfoOffset;
 

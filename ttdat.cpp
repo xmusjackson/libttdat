@@ -215,6 +215,7 @@ void TTDat::getFileInfo() {
             nameInfoOffset = fileNamesSize + fileNamesOffset;
             fileList = new fileData[fileNameCount];
             
+            /* Get File/Dir List */
             int currOffset;
             currOffset = nameInfoOffset + 4;
             for (int i = 0; i < (fileNameCount); i++) {
@@ -231,10 +232,14 @@ void TTDat::getFileInfo() {
 
                 currOffset += 2;
             }
-            currOffset = infoFile.tellg();
+
             fileList[fileNameCount - 1].fileID = fileNameCount - 1;
-            infoType = getLongIntBE(infoFile, currOffset);
-            fileCount = getLongIntBE(infoFile, currOffset);
+
+            currOffset = infoFile.tellg();
+            infoType = getLongIntBE(infoFile, currOffset);   // The quickbms script has these checks, but in the files I've tested, these values
+            fileCount = getLongIntBE(infoFile, currOffset+=4);  // appear to be the same as those at the beginning of the info offset +4 and +8, respectively
+                                                             // FIXME: Needs More Testing
+            /* Get CRCS */
 
         } else {
             if (!(infoLoc)) {newInfoOffset = 8;}
