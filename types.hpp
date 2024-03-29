@@ -13,10 +13,11 @@ enum TTDatError {
 };
 
 struct fileData {
-    std::string crc;
     std::string fileName;
-    std::string filePath;
-    int offset;
-    int fileSize;
-    int fileID;
+    unsigned long long crc;
+    unsigned int offset;
+    unsigned int nameOffset;
+    unsigned int fileSize;
+    unsigned short fileID;
+    unsigned short pathID;
 };

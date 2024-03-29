@@ -4,51 +4,52 @@ TTDat::TTDat() {
 }
 
 TTDat::TTDat(std::string filePath, std::string fileName) {
-    this->infoOffset = 0;
-    this->newInfoOffset = 0;
-    this->nameInfoOffset = 0;
-    this->infoSize = 0;
-    this->fileCount = 0;
-    this->fileNameCount = 0;
-    this->fileNamesSize = 0;
-    this->fileNamesOffset = 0;
-    this->infoType = 0;
-    this->errorState = NO_ERROR;
-    this->datFilePath = filePath;
-    this->datFileName = fileName;
-    this->isCompressed = false;
-    this->_openDatFile(this->datFilePath + this->datFileName);
+    infoOffset = 0;
+    newInfoOffset = 0;
+    nameInfoOffset = 0;
+    infoSize = 0;
+    fileCount = 0;
+    fileNameCount = 0;
+    fileNamesSize = 0;
+    fileNamesOffset = 0;
+    infoType = 0;
+    errorState = NO_ERROR;
+    datFilePath = filePath;
+    datFileName = fileName;
+    isCompressed = false;
+    _openDatFile(datFilePath + datFileName);
 
-    if (!(this->datFile.is_open())) {
-        this->errorState = FILE_ERROR;
+    if (!(datFile.is_open())) {
+        errorState = FILE_ERROR;
         return;
     }
 
-    this->checkHdrFile();
+    checkHdrFile();
 
-    if (this->checkCMP2()) {
-        this->decompressDat();
+    if (checkCMP2()) {
+        decompressDat();
     }
 
-    this->getFileInfo();
+    getFileInfo();
 }
 
 TTDat::~TTDat(){
-    if (this->datFile.is_open())
-        this->datFile.close();
+    if (datFile.is_open())
+        datFile.close();
     
-    if (this->hdrFile.is_open())
-        this->hdrFile.close();
+    if (hdrFile.is_open())
+        hdrFile.close();
 }
 
 void TTDat::_openDatFile (std::string fileName){
-    this->datFile.open(fileName);
+    datFile.open(fileName);
 }
 
 void TTDat::openDatFile (std::string pathName, std::string fileName){
-    this->_openDatFile(pathName + fileName);
+    _openDatFile(pathName + fileName);
 }
 
+/* Reads a long int from file at offset as a little endian value */
 int TTDat::getLongInt(std::ifstream& file, int offset) {
     unsigned char bytes[4];
     int int32 = 0;
@@ -63,7 +64,7 @@ int TTDat::getLongInt(std::ifstream& file, int offset) {
     return int32;
 }
 
-/* Reads a long int as big endian */
+/* Reads a long int from file at offset as a big endian value */
 int TTDat::getLongIntBE(std::ifstream& file, int offset) {
     unsigned char bytes[4];
     int int32 = 0;
@@ -78,8 +79,38 @@ int TTDat::getLongIntBE(std::ifstream& file, int offset) {
     return int32;
 }
 
+ /* Reads a short int from file at offset as a little endian value */
+int TTDat::getShortInt(std::ifstream& file, int offset) {
+    unsigned char bytes[2];
+    int int32 = 0;
+
+    file.clear();
+    file.seekg(offset, file.beg);
+    file.read((char*)bytes, 2);
+
+    for (int i = 1; i >= 0; i--)
+        int32 = (int32 << 8) + bytes[i];
+
+    return int32;
+}
+
+/* Reads a short int from file at offset as a big endian value */
+int TTDat::getShortIntBE(std::ifstream& file, int offset) {
+    unsigned char bytes[2];
+    int int32 = 0;
+
+    file.clear();
+    file.seekg(offset, file.beg);
+    file.read((char*)bytes, 2);
+
+    for (int i = 0; i <= 1; i++)
+        int32 = (int32 << 8) + bytes[i];
+
+    return int32;
+}
+
 int TTDat::getInfoOffset () {
-    int tmp = getLongInt(this->datFile, 0);
+    int tmp = getLongInt(datFile, 0);
 
         if (tmp & INFO_AND) {
             tmp ^= INFO_XOR;
@@ -92,8 +123,8 @@ int TTDat::getInfoOffset () {
 
 bool TTDat::isNewFormat() {
     char *infoTypeStr, *fileCountStr;
-    infoTypeStr = longToStr(this->infoType);
-    fileCountStr = longToStr(this->fileCount);
+    infoTypeStr = longToStr(infoType);
+    fileCountStr = longToStr(fileCount);
     
     if ((!strcmp(infoTypeStr, "\x34\x43\x43\x2e") || !strcmp(infoTypeStr, "\x2e\x43\x43\x34")) ||
        (!strcmp(fileCountStr, "\x34\x43\x43\x2e") || !strcmp(fileCountStr, "\x2e\x43\x43\x34"))) {
@@ -114,11 +145,11 @@ void TTDat::decompressDat () {
 
 bool TTDat::checkCMP2 () {
     char* cmpStr = (char*)malloc(17);
-    this->datFile.seekg(0);
-    this->datFile.read(cmpStr, 16);
+    datFile.seekg(0);
+    datFile.read(cmpStr, 16);
 
     if (strncmp(cmpStr, "CMP2CMP2CMP2CMP2", 16) == 0) {
-        this->isCompressed = true;
+        isCompressed = true;
         free(cmpStr);
         return true;
     }
@@ -128,22 +159,22 @@ bool TTDat::checkCMP2 () {
 }
 
 bool TTDat::checkHdrFile () {
-    size_t dotPos = this->datFileName.find_last_of('.');
-    std::string hdrFileName = this->datFileName.substr(0, dotPos) + ".HDR";
+    size_t dotPos = datFileName.find_last_of('.');
+    std::string hdrFileName = datFileName.substr(0, dotPos) + ".HDR";
 
-    this->hdrFile.open(this->datFilePath + hdrFileName);
+    hdrFile.open(datFilePath + hdrFileName);
 
-    if (this->hdrFile.is_open()) {
-        this->infoLoc = HDR;
+    if (hdrFile.is_open()) {
+        infoLoc = HDR;
         return true;
     }
     
-    this->hdrFile.clear();
-    this->infoLoc = DAT;
+    hdrFile.clear();
+    infoLoc = DAT;
     return false;
 }
 
-char* TTDat::longToStr(u_int32_t integer) {
+char* TTDat::longToStr(unsigned int integer) {
     char* intStr = (char*)malloc(5);
     strlcpy(intStr, (char*)&integer, 5);
     
@@ -158,50 +189,62 @@ std::string TTDat::toUpper(std::string& string) {
 
 void TTDat::getFileInfo() {
         //int tmpOffset;
-        std::ifstream& infoFile = ((this->infoLoc) ? this->hdrFile : this->datFile);
+        std::ifstream& infoFile = ((infoLoc) ? hdrFile : datFile);
 
-        if (this->infoLoc) {
-            this->infoOffset = 12;
-            this->infoSize = this->getLongIntBE(this->hdrFile, 0);
-            this->infoType = this->getLongInt(this->hdrFile, 4);
-            this->fileCount = this->getLongInt(this->hdrFile, 8);
+        if (infoLoc) {
+            infoOffset = 12;
+            infoSize = getLongIntBE(hdrFile, 0);
+            infoType = getLongInt(hdrFile, 4);
+            fileCount = getLongInt(hdrFile, 8);
         } else {
-            this->infoOffset = this->getInfoOffset();
-            this->infoSize = this->getLongInt(this->datFile, 4);
-            this->infoType = this->getLongInt(this->datFile, this->infoOffset);
-            this->fileCount = this->getLongInt(this->datFile, this->infoOffset + 4);
+            infoOffset = getInfoOffset();
+            infoSize = getLongInt(datFile, 4);
+            infoType = getLongInt(datFile, infoOffset);
+            fileCount = getLongInt(datFile, infoOffset + 4);
         }
         
-        if ((this->newFormat = this->isNewFormat())) {
-            this->infoType = this->getLongIntBE(infoFile, this->infoOffset + 12);
-            this->newFormatVersion = getLongIntBE(infoFile, this->infoOffset + 16);
+        if ((newFormat = isNewFormat())) {
+            infoType = getLongIntBE(infoFile, infoOffset + 12);
+            newFormatVersion = getLongIntBE(infoFile, infoOffset + 16);
             
-            this->fileCount = this->getLongIntBE(infoFile, this->infoOffset + 20);
-            this->fileNameCount = this->getLongIntBE(infoFile, this->infoOffset + 24);
-            this->fileNamesSize = this->getLongIntBE(infoFile, this->infoOffset + 28);
-            this->fileNamesOffset = this->infoOffset + 32;
+            fileCount = getLongIntBE(infoFile, infoOffset + 20);
+            fileNameCount = getLongIntBE(infoFile, infoOffset + 24);
+            fileNamesSize = getLongIntBE(infoFile, infoOffset + 28);
+            fileNamesOffset = infoOffset + 32;
             
-            this->crcsOffset = this->fileNamesSize + this->fileNamesOffset;
-            this->fileList = (fileData*)malloc(sizeof(fileData) * this->fileNameCount);
+            nameInfoOffset = fileNamesSize + fileNamesOffset;
+            fileList = new fileData[fileNameCount];
             
-            //int nameOffset, dirID, fileID;
-            for (int i = 0; i < (this->fileNameCount); i++) {
-                
-            }
-        } else {
-            if (!(this->infoLoc)) {this->newInfoOffset = 8;}
-            this->nameInfoOffset = this->infoOffset + this->newInfoOffset + (this->fileCount * 16) + 8;
-            this->fileNameCount = this->getLongInt(infoFile, this->nameInfoOffset - 8);
+            int currOffset;
+            currOffset = nameInfoOffset + 4;
+            for (int i = 0; i < (fileNameCount); i++) {
+                fileList[i].nameOffset = getLongIntBE(infoFile, currOffset);
+                if (i == 0)
+                    fileList[i].nameOffset += 1;
 
-            if (this->infoType <= -5) {
-                this->nameFieldSize = 12;
-            } else {
-                this->nameFieldSize = 8;
+                fileList[i].pathID = getShortIntBE(infoFile, currOffset+=4);
+                fileList[i].fileID = getShortIntBE(infoFile, (newFormatVersion >= 2) ? currOffset+=6 : currOffset+=4);
+                infoFile.seekg(fileList[i].nameOffset + fileNamesOffset);
+                std::getline(infoFile, (fileList[i].fileName), '\0');
+                if (fileList[i].fileID == 0 && i != 0 && i != fileNameCount - 1)
+                    fileList[i].fileName = fileList[fileList[i].pathID].fileName + "/" + fileList[i].fileName;
+
+                currOffset += 2;
             }
-            this->fileNamesOffset = (this->fileNameCount * this->nameFieldSize) + this->nameInfoOffset - 4;
-            this->fileNamesSize = this->getLongInt(infoFile, this->fileNamesOffset);
-            this->crcsOffset = this->getLongInt(infoFile, this->fileNamesOffset) + this->fileNamesOffset + 4;
-            this->nameInfoOffset += 4;
-            this->fileList = (fileData*)malloc(sizeof(fileData) * this->fileNameCount);
+            currOffset = infoFile.tellg();
+            fileList[fileNameCount - 1].fileID = fileNameCount - 1;
+            infoType = getLongIntBE(infoFile, currOffset);
+            fileCount = getLongIntBE(infoFile, currOffset);
+
+        } else {
+            if (!(infoLoc)) {newInfoOffset = 8;}
+            nameInfoOffset = infoOffset + newInfoOffset + (fileCount * 16) + 8;
+            fileNameCount = getLongInt(infoFile, nameInfoOffset - 8);
+            nameFieldSize = (infoType <= -5) ? 12 : 8;
+            fileNamesOffset = (fileNameCount * nameFieldSize) + nameInfoOffset - 4;
+            fileNamesSize = getLongInt(infoFile, fileNamesOffset);
+            crcsOffset = getLongInt(infoFile, fileNamesOffset) + fileNamesOffset + 4;
+            nameInfoOffset += 4;
+            fileList = new fileData[fileNameCount];
         }
 }

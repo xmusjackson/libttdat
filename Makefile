@@ -12,7 +12,7 @@ OBJDIRS = test/obj obj
 all: $(OUT)
 
 build/bin/ttdat_test: test/obj/ttdat_test.o build/lib/libttdat.so build/bin
-	$(CC) $(DFLAGS) $(LFLAGS) -o build/bin/libttdat_test test/obj/ttdat_test.o
+	$(CC) $(DFLAGS) $(LFLAGS) -o build/bin/ttdat_test test/obj/ttdat_test.o
 
 build/lib/libttdat.so: obj/ttdat.o build/lib
 	$(CC) $(SOFLAGS) -o build/lib/libttdat.so obj/ttdat.o
