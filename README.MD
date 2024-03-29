@@ -1,6 +1,6 @@
 # libttdat
 
-## A WIP ttgames dat file extractor/patcher library written in c++ with portability in mind.
+## A WIP ttgames dat file extractor/patcher library written in c++.
 
 ### Current State
 
@@ -33,7 +33,8 @@ There is no install target in the makefile yet as this doesn't really do much.
 
 ### Testing
 
-Not much testing to do yet. The test program currently outputs some information about the dat file given as an argument. To test anyway:
+Not much testing to do yet. The library gathers offsets and other important data from the DAT and builds a file list. The test program outputs the information to stdout. 
+To test anyway:
 
 After building this project:
 
