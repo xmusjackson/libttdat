@@ -1,12 +1,27 @@
 #include "ttdat.hpp"
 
 TTDat::TTDat() {
+    infoOffset = 0;
+    newInfoOffset = 0;
+    nameInfoOffset = 0;
+    crcsOffset = 0;
+    infoSize = 0;
+    fileCount = 0;
+    fileNameCount = 0;
+    fileNamesSize = 0;
+    fileNamesOffset = 0;
+    infoType = 0;
+    errorState = NO_ERROR;
+    datFilePath = "";
+    datFileName = "";
+    isCompressed = false;
 }
 
 TTDat::TTDat(std::string filePath, std::string fileName) {
     infoOffset = 0;
     newInfoOffset = 0;
     nameInfoOffset = 0;
+    crcsOffset = 0;
     infoSize = 0;
     fileCount = 0;
     fileNameCount = 0;
@@ -17,6 +32,7 @@ TTDat::TTDat(std::string filePath, std::string fileName) {
     datFilePath = filePath;
     datFileName = fileName;
     isCompressed = false;
+
     _openDatFile(datFilePath + datFileName);
 
     if (!(datFile.is_open())) {
@@ -31,6 +47,7 @@ TTDat::TTDat(std::string filePath, std::string fileName) {
     }
 
     getFileInfo();
+    getFileList();
 }
 
 TTDat::~TTDat(){
@@ -42,75 +59,71 @@ TTDat::~TTDat(){
 }
 
 void TTDat::_openDatFile (std::string fileName){
-    datFile.open(fileName);
+    datFile.open(fileName,std::ios::binary);
 }
 
 void TTDat::openDatFile (std::string pathName, std::string fileName){
     _openDatFile(pathName + fileName);
 }
 
-/* Reads a long int from file at offset as a little endian value */
-int TTDat::getLongInt(std::ifstream& file, int offset) {
-    unsigned char bytes[4];
+/* Reads an int of size 'size' from 'file' at 'offset' as a little endian value */
+int TTDat::getInt(std::ifstream& file, unsigned short size, unsigned int offset) {
+    unsigned char* bytes = (unsigned char*)malloc(size);
     int int32 = 0;
 
     file.clear();
     file.seekg(offset, file.beg);
     file.read((char*)bytes, 4);
 
-    for (int i = 3; i >= 0; i--)
+    for (int i = size - 1; i >= 0; i--)
         int32 = (int32 << 8) + bytes[i];
 
     return int32;
 }
 
-/* Reads a long int from file at offset as a big endian value */
-int TTDat::getLongIntBE(std::ifstream& file, int offset) {
-    unsigned char bytes[4];
+/* Reads an int of size 'size' from 'file' at 'offset' as a big endian value */
+int TTDat::getIntBE(std::ifstream& file, unsigned short size, unsigned int offset) {
+    unsigned char* bytes = (unsigned char*)malloc(size);
     int int32 = 0;
 
     file.clear();
     file.seekg(offset, file.beg);
-    file.read((char*)bytes, 4);
+    file.read((char*)bytes, size);
 
-    for (int i = 0; i <= 3; i++)
+    for (int i = 0; i <= size - 1; i++)
         int32 = (int32 << 8) + bytes[i];
 
     return int32;
 }
 
- /* Reads a short int from file at offset as a little endian value */
-int TTDat::getShortInt(std::ifstream& file, int offset) {
-    unsigned char bytes[2];
+/* Reads an int of size 'size' from 'file' at 'offset' as a little endian value */
+int TTDat::getInt(std::ifstream& file, unsigned short size) {
+    unsigned char* bytes = (unsigned char*)malloc(size);
     int int32 = 0;
 
-    file.clear();
-    file.seekg(offset, file.beg);
-    file.read((char*)bytes, 2);
+    file.read((char*)bytes, size);
 
-    for (int i = 1; i >= 0; i--)
+    for (int i = size - 1; i >= 0; i--)
         int32 = (int32 << 8) + bytes[i];
 
     return int32;
 }
 
-/* Reads a short int from file at offset as a big endian value */
-int TTDat::getShortIntBE(std::ifstream& file, int offset) {
-    unsigned char bytes[2];
+/* Reads an int of size 'size' from 'file' at 'offset' as a big endian value */
+int TTDat::getIntBE(std::ifstream& file, unsigned short size) {
+    unsigned char* bytes = (unsigned char*)malloc(size);
     int int32 = 0;
 
-    file.clear();
-    file.seekg(offset, file.beg);
-    file.read((char*)bytes, 2);
+    file.read((char*)bytes, size);
 
-    for (int i = 0; i <= 1; i++)
+    for (int i = 0; i <= size - 1; i++)
         int32 = (int32 << 8) + bytes[i];
 
     return int32;
 }
 
 int TTDat::getInfoOffset () {
-    int tmp = getLongInt(datFile, 0);
+    int tmp = getInt(datFile, S_LONG, 0);
 
         if (tmp & INFO_AND) {
             tmp ^= INFO_XOR;
@@ -193,63 +206,77 @@ void TTDat::getFileInfo() {
 
         if (infoLoc) {
             infoOffset = 12;
-            infoSize = getLongIntBE(hdrFile, 0);
-            infoType = getLongInt(hdrFile, 4);
-            fileCount = getLongInt(hdrFile, 8);
+            infoSize = getIntBE(hdrFile, S_LONG, 0);
+            infoType = getInt(hdrFile, S_LONG);
+            fileCount = getInt(hdrFile, S_LONG);
         } else {
             infoOffset = getInfoOffset();
-            infoSize = getLongInt(datFile, 4);
-            infoType = getLongInt(datFile, infoOffset);
-            fileCount = getLongInt(datFile, infoOffset + 4);
+            infoSize = getInt(datFile, S_LONG, 4);
+            infoType = getInt(datFile, S_LONG, infoOffset);
+            fileCount = getInt(datFile, S_LONG);
         }
         
         if ((newFormat = isNewFormat())) {
-            infoType = getLongIntBE(infoFile, infoOffset + 12);
-            newFormatVersion = getLongIntBE(infoFile, infoOffset + 16);
-            
-            fileCount = getLongIntBE(infoFile, infoOffset + 20);
-            fileNameCount = getLongIntBE(infoFile, infoOffset + 24);
-            fileNamesSize = getLongIntBE(infoFile, infoOffset + 28);
+            infoType = getIntBE(infoFile, S_LONG, infoOffset + 12);
+            newFormatVersion = getIntBE(infoFile, S_LONG);
+
+            fileCount = getIntBE(infoFile, S_LONG);
+            fileNameCount = getIntBE(infoFile, S_LONG);
+            fileNamesSize = getIntBE(infoFile, S_LONG);
             fileNamesOffset = infoOffset + 32;
             
             nameInfoOffset = fileNamesSize + fileNamesOffset;
-            fileList = new fileData[fileNameCount];
-            
-            /* Get File/Dir List */
-            int currOffset;
+        } else {
+            if (!(infoLoc)) {newInfoOffset = 8;}
+            nameInfoOffset = infoOffset + newInfoOffset + (fileCount * 16) + 12;
+            fileNameCount = getInt(infoFile, S_LONG, nameInfoOffset - 8);
+            nameFieldSize = (infoType <= -5) ? 12 : 8;
+            fileNamesOffset = (fileNameCount * nameFieldSize) + nameInfoOffset - 8;
+            fileNamesSize = getInt(infoFile, S_LONG, fileNamesOffset);
+            crcsOffset = fileNamesSize + fileNamesOffset + 4;
+        }
+}
+
+void TTDat::getFileList() {
+    std::ifstream& infoFile = ((infoLoc) ? hdrFile : datFile);
+    unsigned int currOffset;
+    fileList = new fileData[fileNameCount];
+    
+    if (newFormat) {
+
             currOffset = nameInfoOffset + 4;
+            infoFile.seekg(currOffset);
             for (int i = 0; i < (fileNameCount); i++) {
-                fileList[i].nameOffset = getLongIntBE(infoFile, currOffset);
+                fileList[i].nameOffset = getIntBE(infoFile, S_LONG);
                 if (i == 0)
                     fileList[i].nameOffset += 1;
 
-                fileList[i].pathID = getShortIntBE(infoFile, currOffset+=4);
-                fileList[i].fileID = getShortIntBE(infoFile, (newFormatVersion >= 2) ? currOffset+=6 : currOffset+=4);
+                fileList[i].pathID = getIntBE(infoFile, S_SHORT);
+                if (newFormatVersion >= 2)
+                    infoFile.ignore(2);
+
+                fileList[i].fileID = getIntBE(infoFile, S_SHORT);
+                currOffset = infoFile.tellg();
                 infoFile.seekg(fileList[i].nameOffset + fileNamesOffset);
+
                 std::getline(infoFile, (fileList[i].fileName), '\0');
                 if (fileList[i].fileID == 0 && i != 0 && i != fileNameCount - 1)
                     fileList[i].fileName = fileList[fileList[i].pathID].fileName + "/" + fileList[i].fileName;
-
-                currOffset += 2;
+                infoFile.seekg(currOffset);
+                infoFile.ignore(2);
             }
 
             fileList[fileNameCount - 1].fileID = fileNameCount - 1;
 
-            currOffset = infoFile.tellg();
-            infoType = getLongIntBE(infoFile, currOffset);   // The quickbms script has these checks, but in the files I've tested, these values
-            fileCount = getLongIntBE(infoFile, currOffset+=4);  // appear to be the same as those at the beginning of the info offset +4 and +8, respectively
-                                                             // FIXME: Needs More Testing
-            /* Get CRCS */
+            infoType = getIntBE(infoFile, S_LONG);       // The quickbms script has these checks, but in the files I've tested, these values
+            fileCount = getIntBE(infoFile, S_LONG);      // appear to be the same as those at the beginning of the info offset +4 and +8, respectively
+                                                         // FIXME: Needs More Testing; It's possible that some dat variants use a mix of this version number
+    } else {
+            currOffset = nameInfoOffset;
+            for (int i= 0; i < fileNameCount; i++) {
 
-        } else {
-            if (!(infoLoc)) {newInfoOffset = 8;}
-            nameInfoOffset = infoOffset + newInfoOffset + (fileCount * 16) + 8;
-            fileNameCount = getLongInt(infoFile, nameInfoOffset - 8);
-            nameFieldSize = (infoType <= -5) ? 12 : 8;
-            fileNamesOffset = (fileNameCount * nameFieldSize) + nameInfoOffset - 4;
-            fileNamesSize = getLongInt(infoFile, fileNamesOffset);
-            crcsOffset = getLongInt(infoFile, fileNamesOffset) + fileNamesOffset + 4;
-            nameInfoOffset += 4;
-            fileList = new fileData[fileNameCount];
-        }
+            }
+
+
+    }
 }

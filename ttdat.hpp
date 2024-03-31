@@ -7,16 +7,7 @@
 #include <map>
 
 #include "types.hpp"
-
-
-#define INFO_AND 0x80000000
-#define INFO_XOR 0xFFFFFFFF
-#define INFO_SHIFT 8
-#define INFO_ADD 0x100
-
-#define ID_DIR 0
-
-#define NO_NAME 0xFFFFFFFF
+#include "defs.hpp"
 
 class TTDat {
     private:
@@ -34,23 +25,23 @@ class TTDat {
 
         loc infoLoc;
 
-        int getLongInt(std::ifstream& /*file*/, int /*offset*/);
+        int getInt(std::ifstream& /*file*/, unsigned short /*size*/, unsigned int /*offset*/);
 
-        int getLongIntBE(std::ifstream& /*file*/, int /*offset*/);
+        int getIntBE(std::ifstream& /*file*/, unsigned short /*size*/, unsigned int /*offset*/);
 
-        int getShortInt(std::ifstream& /*file*/, int /*offset*/);
+        int getInt(std::ifstream& /*file*/, unsigned short /*size*/);
 
-        int getShortIntBE(std::ifstream& /*file*/, int /*offset*/);
+        int getIntBE(std::ifstream& /*file*/, unsigned short /*size*/);
 
         int getInfoOffset();
-        
-        int getInfoSize();
 
         void decompressDat();
         
         void _openDatFile(std::string /*datFileName*/);
 
         void getFileInfo();
+
+        void getFileList();
 
         bool checkCMP2();
         
@@ -98,17 +89,17 @@ class TTDat {
 
         int fileNamesSize;
 
-        long int fileNamesOffset;
+        unsigned int fileNamesOffset;
 
         int nameFieldSize;
 
-        long int nameInfoOffset;
+        unsigned int nameInfoOffset;
 
         int infoType;
 
         int hdrSize;
 
-        long int crcsOffset;
+        unsigned int crcsOffset;
         
         unsigned int infoOffset;
 
@@ -119,6 +110,8 @@ class TTDat {
         int newFormatVersion;
 
         bool newFormat;
+
+        unsigned int newFormatCheck;
 
         bool isCompressed;
 
