@@ -59,7 +59,7 @@ TTDat::~TTDat(){
 }
 
 void TTDat::_openDatFile (std::string fileName){
-    datFile.open(fileName,std::ios::binary);
+    datFile.open(fileName, std::ios::binary);
 }
 
 void TTDat::openDatFile (std::string pathName, std::string fileName){
@@ -179,7 +179,7 @@ bool TTDat::checkHdrFile () {
     size_t dotPos = datFileName.find_last_of('.');
     std::string hdrFileName = datFileName.substr(0, dotPos) + ".HDR";
 
-    hdrFile.open(datFilePath + hdrFileName);
+    hdrFile.open(datFilePath + hdrFileName, std::ios::binary);
 
     if (hdrFile.is_open()) {
         infoLoc = HDR;
@@ -247,7 +247,6 @@ void TTDat::getFileList() {
     fileList = new fileData[fileNameCount];
     
     if (newFormat) {
-
             currOffset = nameInfoOffset + 4;
             infoFile.seekg(currOffset);
             for (int i = 0; i < (fileNameCount); i++) {
@@ -266,6 +265,7 @@ void TTDat::getFileList() {
                 std::getline(infoFile, (fileList[i].fileName), '\0');
                 if (fileList[i].fileID == 0 && i != 0 && i != fileNameCount - 1)
                     fileList[i].fileName = fileList[fileList[i].pathID].fileName + "/" + fileList[i].fileName;
+
                 infoFile.seekg(currOffset);
                 infoFile.ignore(2);
             }
@@ -280,7 +280,5 @@ void TTDat::getFileList() {
             for (int i= 0; i < fileNameCount; i++) {
 
             }
-
-
     }
 }
