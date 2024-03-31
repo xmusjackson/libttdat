@@ -78,6 +78,7 @@ int TTDat::getInt(std::ifstream& file, unsigned short size, unsigned int offset)
     for (int i = size - 1; i >= 0; i--)
         int32 = (int32 << 8) + bytes[i];
 
+    free(bytes);
     return int32;
 }
 
@@ -93,6 +94,7 @@ int TTDat::getIntBE(std::ifstream& file, unsigned short size, unsigned int offse
     for (int i = 0; i <= size - 1; i++)
         int32 = (int32 << 8) + bytes[i];
 
+    free(bytes);
     return int32;
 }
 
@@ -106,6 +108,7 @@ int TTDat::getInt(std::ifstream& file, unsigned short size) {
     for (int i = size - 1; i >= 0; i--)
         int32 = (int32 << 8) + bytes[i];
 
+    free(bytes);
     return int32;
 }
 
@@ -119,6 +122,7 @@ int TTDat::getIntBE(std::ifstream& file, unsigned short size) {
     for (int i = 0; i <= size - 1; i++)
         int32 = (int32 << 8) + bytes[i];
 
+    free(bytes);
     return int32;
 }
 
@@ -227,7 +231,7 @@ void TTDat::getFileInfo() {
             
             nameInfoOffset = fileNamesSize + fileNamesOffset;
         } else {
-            if (!(infoLoc)) {newInfoOffset = 8;}
+            if (!(infoLoc)) newInfoOffset = 8;
             nameInfoOffset = infoOffset + newInfoOffset + (fileCount * 16) + 12;
             fileNameCount = getInt(infoFile, S_LONG, nameInfoOffset - 8);
             nameFieldSize = (infoType <= -5) ? 12 : 8;
@@ -268,9 +272,9 @@ void TTDat::getFileList() {
 
             fileList[fileNameCount - 1].fileID = fileNameCount - 1;
 
-            infoType = getIntBE(infoFile, S_LONG);       // The quickbms script has these checks, but in the files I've tested, these values
-            fileCount = getIntBE(infoFile, S_LONG);      // appear to be the same as those at the beginning of the info offset +4 and +8, respectively
-                                                         // FIXME: Needs More Testing; It's possible that some dat variants use a mix of this version number
+            infoType = getIntBE(infoFile, S_LONG);       // FIXME: The quickbms script has these checks, but in the files I've tested, these values
+            fileCount = getIntBE(infoFile, S_LONG);      // appear to be the same as those at the beginning of the info offset +4 and +8, respectively.
+                                                         // This needs More Testing; It's possible that some dat variants use a mix of this version number
     } else {
             currOffset = nameInfoOffset;
             for (int i= 0; i < fileNameCount; i++) {
