@@ -11,25 +11,46 @@ https://aluigi.altervista.org/quickbms.htm
 
 After initial implementation, this library should provide similar functionality with improved performance. Eventually I wish to include further functionality, such as repacking, adjusting offsets, and potentially even creating dat files from scratch. Currently this library does essentially nothing but the first few steps of identifying offsets. More functionality should appear in the coming weeks.
 
-This is being written in C++23 on a linux machine with portability in mind. This will be ported to at least Windows and macOS once initial unpacking functionality is completed.
+This is being written in C++20 on a linux machine with portability in mind. This will be ported to at least Windows and macOS once initial unpacking functionality is completed.
 
-### Building for Linux
+### Building
+
+#### Building for Linux
  
-#### Requirements
+##### Requirements
 
  1. Modern g++ or clang++ and llvm
  2. Linux System
- 3. Developement packages for your system (make etc...)
+ 3. Developement packages for your system, including make and cmake
 
-#### Building
+##### Building
 
 Run the following in a terminal once you have met the requriements above:
 
     git clone https://github.com/xmusjackson/libttdat.git
     cd libttdat
-    make
+    ./build-linux.sh
 
-There is no install target in the makefile yet as this doesn't really do much.
+There is no install target in the CMakeLists yet as this doesn't really do much.
+
+#### Building for Windows
+ 
+##### Requirements
+
+ 1. Visual Studio 2022
+ 2. Windows System
+ 3. C++ Desktop Developement package and CMake from Visual Studio Installer
+
+##### Building
+
+Run the following in an MSVC Developer Powershell once you have met the requriements above:
+
+    git clone https://github.com/xmusjackson/libttdat.git
+    cd libttdat
+    .\build-windows.ps1
+
+There is no install target in the CMakeLists yet as this doesn't really do much.
+
 
 ### Testing
 
@@ -38,13 +59,19 @@ To test anyway:
 
 After building this project:
 
-    $ LD_LIBRARY_PATH=build/lib:$LD_LIBRARY_PATH build/bin/ttdat_test /home/user/directory/GAME.DAT
+Windows:
 
-Replace the filepath with an actual path to a GAME.DAT.
+    .\build\Debug\libttdat_test.exe C:\path\to\GAME.DAT
+
+Linux:
+
+    build/libttdat_test /path/to/GAME.DAT
+
+* Replace the filepath with an actual path to a GAME.DAT.
 
 Example output: 
 
-    $ LD_LIBRARY_PATH=build/lib build/bin/libttdat_test /home/christian/steamdir/steamapps/common/The\ LEGO\ Movie\ -\ Videogame/GAME.DAT 
+    $ LD_LIBRARY_PATH=build/lib build/libttdat_test /home/christian/steamdir/steamapps/common/The\ LEGO\ Movie\ -\ Videogame/GAME.DAT 
       Info Offset: 12
       New Info Offset: 0
       Info Size: 751320

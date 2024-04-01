@@ -1,4 +1,8 @@
-#include "ttdat.hpp"
+#include "libttdat/ttdat.hpp"
+
+#ifdef _WIN32
+#include "win32/pch.h"
+#endif
 
 TTDat::TTDat() {
     infoOffset = 0;
@@ -11,7 +15,7 @@ TTDat::TTDat() {
     fileNamesSize = 0;
     fileNamesOffset = 0;
     infoType = 0;
-    errorState = NO_ERROR;
+    errorState = TTDAT_NO_ERROR;
     datFilePath = "";
     datFileName = "";
     isCompressed = false;
@@ -28,7 +32,7 @@ TTDat::TTDat(std::string filePath, std::string fileName) {
     fileNamesSize = 0;
     fileNamesOffset = 0;
     infoType = 0;
-    errorState = NO_ERROR;
+    errorState = TTDAT_NO_ERROR;
     datFilePath = filePath;
     datFileName = fileName;
     isCompressed = false;
@@ -36,7 +40,7 @@ TTDat::TTDat(std::string filePath, std::string fileName) {
     _openDatFile(datFilePath + datFileName);
 
     if (!(datFile.is_open())) {
-        errorState = FILE_ERROR;
+        errorState = TTDAT_FILE_ERROR;
         return;
     }
 
@@ -142,9 +146,9 @@ bool TTDat::isNewFormat() {
     char *infoTypeStr, *fileCountStr;
     infoTypeStr = longToStr(infoType);
     fileCountStr = longToStr(fileCount);
-    
-    if ((!strcmp(infoTypeStr, "\x34\x43\x43\x2e") || !strcmp(infoTypeStr, "\x2e\x43\x43\x34")) ||
-       (!strcmp(fileCountStr, "\x34\x43\x43\x2e") || !strcmp(fileCountStr, "\x2e\x43\x43\x34"))) {
+
+    if ((!strncmp(infoTypeStr, "\x34\x43\x43\x2e", 4) || !strncmp(infoTypeStr, "\x2e\x43\x43\x34", 4)) ||
+       (!strncmp(fileCountStr, "\x34\x43\x43\x2e", 4) || !strncmp(fileCountStr, "\x2e\x43\x43\x34", 4))) {
         free(infoTypeStr);
         free(fileCountStr);
         return true;
@@ -191,9 +195,10 @@ bool TTDat::checkHdrFile () {
     return false;
 }
 
-char* TTDat::longToStr(unsigned int integer) {
+char* TTDat::longToStr(int integer) {
     char* intStr = (char*)malloc(5);
-    strlcpy(intStr, (char*)&integer, 5);
+    memcpy(intStr, &integer, 4);
+    intStr[4] = '\0';
     
     return intStr;
 }
@@ -205,7 +210,6 @@ std::string TTDat::toUpper(std::string& string) {
 }
 
 void TTDat::getFileInfo() {
-        //int tmpOffset;
         std::ifstream& infoFile = ((infoLoc) ? hdrFile : datFile);
 
         if (infoLoc) {
@@ -244,9 +248,17 @@ void TTDat::getFileInfo() {
 void TTDat::getFileList() {
     std::ifstream& infoFile = ((infoLoc) ? hdrFile : datFile);
     unsigned int currOffset;
+
+    if (fileNameCount * 64 > 1073741824) { // If fileNameCount would result in massive amounts of memory being allocated (something is wrong)
+        errorState = TTDAT_OFFSET_ERROR;
+        return;
+    }
+
     fileList = new fileData[fileNameCount];
     
     if (newFormat) {
+
+            /* Get file ids, path ids, and name offsets */
             currOffset = nameInfoOffset + 4;
             infoFile.seekg(currOffset);
             for (int i = 0; i < (fileNameCount); i++) {
@@ -261,8 +273,7 @@ void TTDat::getFileList() {
                 fileList[i].fileID = getIntBE(infoFile, S_SHORT);
                 currOffset = infoFile.tellg();
                 infoFile.seekg(fileList[i].nameOffset + fileNamesOffset);
-
-                std::getline(infoFile, (fileList[i].fileName), '\0');
+                std::getline(infoFile, fileList[i].fileName, '\0');
                 if (fileList[i].fileID == 0 && i != 0 && i != fileNameCount - 1)
                     fileList[i].fileName = fileList[fileList[i].pathID].fileName + "/" + fileList[i].fileName;
 
@@ -271,12 +282,30 @@ void TTDat::getFileList() {
 
             fileList[fileNameCount - 1].fileID = fileNameCount - 1;
 
+            /* Get file offsets, 'packed', size, and zsize; 
+               Note: These offets do not align with the above file list, they align with
+               the below crc list which must be used to get the file name for each 
+             */
+
             infoType = getIntBE(infoFile, S_LONG);       // FIXME: The quickbms script has these checks, but in the files I've tested, these values
             fileCount = getIntBE(infoFile, S_LONG);      // appear to be the same as those at the beginning of the info offset +4 and +8, respectively.
-                                                         // This needs More Testing; It's possible that some dat variants use a mix of this version number
+                                                              // This needs More Testing; It's possible that some dat variants use a mix of this version number
+
+
+            for (unsigned int i = 0, j = 0; i < fileCount; (i++, j++)) {
+                if (infoType <= -13) {
+
+                }
+                else if (infoType <= -11) {
+
+                }
+                else {
+
+                }
+            }
     } else {
-            currOffset = nameInfoOffset;
-            for (int i= 0; i < fileNameCount; i++) {
+            //currOffset = nameInfoOffset;
+            for (unsigned int i= 0; i < fileCount; i++) {
 
             }
     }

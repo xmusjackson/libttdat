@@ -1,4 +1,4 @@
-#include "../ttdat.hpp"
+#include "libttdat/ttdat.hpp"
 
 struct pathAndName {
     std::string filePath;
@@ -21,6 +21,7 @@ int main (int argc, char** argv) {
     if (argc > 1) {
         file = getPathAndName(argv[1]);
     } else {
+        std::cout << "Provide a DAT file as an argument." << std::endl;
         return 1;
     }
 

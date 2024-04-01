@@ -3,13 +3,13 @@
 #include <string>
 #include <filesystem>
 #include <algorithm>
-#include <cstring>
-#include <map>
+#include <string.h>
 
+#include "win32.hpp"
 #include "types.hpp"
 #include "defs.hpp"
 
-class TTDat {
+class LIBTTDAT_API TTDat {
     private:
         std::ifstream datFile;
 
@@ -49,12 +49,12 @@ class TTDat {
 
         bool isNewFormat();
 
-        /* Get a string from the contents of a u_int32_t location. This gets the
+        /* Get a string from the contents of a 32 bit integer location. This gets the
         little endian representation.
         Returns: A cstring containing the values from the int's memory location
         Be sure to free the string!
         */
-        char* longToStr(unsigned int);
+        char* longToStr(int);
 
         /*
         Unused for now, but I had a reason for this in mind at one point 
@@ -83,7 +83,7 @@ class TTDat {
          implemented
          */
 
-        unsigned int fileCount;
+        int fileCount;
 
         int fileNameCount;
 
