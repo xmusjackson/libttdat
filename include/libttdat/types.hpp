@@ -6,6 +6,7 @@ enum LIBTTDAT_API loc {
     DAT = 0,
     HDR = 1
 };
+
 enum LIBTTDAT_API TTDatError {
     TTDAT_NO_ERROR = 0,
     TTDAT_FILE_ERROR = 1,
