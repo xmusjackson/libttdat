@@ -266,8 +266,7 @@ void TTDat::getFileList() {
                 if (fileList[i].fileID == 0 && i != 0 && i != fileNameCount - 1)
                     fileList[i].fileName = fileList[fileList[i].pathID].fileName + "/" + fileList[i].fileName;
 
-                infoFile.seekg(currOffset);
-                infoFile.ignore(2);
+                infoFile.seekg(currOffset + 2);
             }
 
             fileList[fileNameCount - 1].fileID = fileNameCount - 1;
