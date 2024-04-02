@@ -214,7 +214,7 @@ void TTDat::getFileInfo() {
 
         if (infoLoc) {
             infoOffset = 12;
-            infoSize = getIntBE(hdrFile, S_LONG, 0);
+            infoSize = getIntBE(hdrFile, S_LONG, 0); // Size of .HDR - 4
             infoType = getInt(hdrFile, S_LONG);
             fileCount = getInt(hdrFile, S_LONG);
         } else {
@@ -284,25 +284,48 @@ void TTDat::getFileList() {
 
             /* Get file offsets, 'packed', size, and zsize; 
                Note: These offets do not align with the above file list, they align with
-               the below crc list which must be used to get the file name for each 
+               the below crc list which must be used to get the filesize and offsets for each 
              */
 
             infoType = getIntBE(infoFile, S_LONG);       // FIXME: The quickbms script has these checks, but in the files I've tested, these values
             fileCount = getIntBE(infoFile, S_LONG);      // appear to be the same as those at the beginning of the info offset +4 and +8, respectively.
                                                               // This needs More Testing; It's possible that some dat variants use a mix of this version number
 
+            struct offsets {unsigned int offset; unsigned int size; int packed; unsigned int zsize;} offsetList[fileCount];
+            unsigned int offsetOr;
 
-            for (unsigned int i = 0, j = 0; i < fileCount; (i++, j++)) {
+            for (unsigned int i = 0; i < fileCount; i++) {
                 if (infoType <= -13) {
-
+                    offsetList[i].packed = getIntBE(infoFile, S_SHORT);
+                    infoFile.ignore(2);
+                    offsetList[i].offset = getIntBE(infoFile, S_LONG);
+                } else if (infoType <= -11) {
+                    offsetList[i].offset = getIntBE(infoFile, S_LONGLONG);
+                } else {
+                    offsetList[i].offset = getIntBE(infoFile, S_LONG);
                 }
-                else if (infoType <= -11) {
 
-                }
-                else {
+                offsetList[i].zsize = getIntBE(infoFile, S_LONG);
+                offsetList[i].size = getIntBE(infoFile, S_LONG);
 
+                if (infoType <= -13) {
+                    offsetList[i].packed = offsetList[i].packed ? 2 : 0;
+                } else if (infoType <= -10) {
+                    offsetList[i].packed = (offsetList[i].size >> 31) ? 2 : 0;
+                    offsetList[i].size &= 0x7FFFFFFF;
+                } else {
+                    offsetList[i].packed = getIntBE(infoFile, S_BYTE);
+                    infoFile.ignore(2);
+                    offsetOr = getIntBE(infoFile, S_BYTE);
+                    offsetList[i].offset |= offsetOr;
                 }
             }
+
+            /* Get CRCs */
+            
+            bool foundCrcs = 0;
+
+
     } else {
             //currOffset = nameInfoOffset;
             for (unsigned int i= 0; i < fileCount; i++) {

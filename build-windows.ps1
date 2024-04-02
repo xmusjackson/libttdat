@@ -6,7 +6,7 @@
     A simple build script which uses cmake to generate MSVC project files to build the library.
  
 .NOTES 
-    Requires VS2022, C++ Desktop Developement package, and CMake (from VS Installer)
+    Requires VS2022, C++ Desktop Developement package, and CMake (from VS Installer). Run this from the VS Developer PowerShell.
 
 .LINK 
     http://github.com/xmusjackson/libttdat.git
