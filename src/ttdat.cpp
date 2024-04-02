@@ -235,13 +235,13 @@ void TTDat::getFileInfo() {
             
             nameInfoOffset = fileNamesSize + fileNamesOffset;
         } else {
-            if (!(infoLoc)) newInfoOffset = 8;
-            nameInfoOffset = infoOffset + newInfoOffset + (fileCount * 16) + 12;
-            fileNameCount = getInt(infoFile, S_LONG, nameInfoOffset - 8);
+            newInfoOffset = infoFile.tellg();
+            nameInfoOffset = newInfoOffset + (fileCount * 16);
+            fileNameCount = getInt(infoFile, S_LONG, nameInfoOffset);
             nameFieldSize = (infoType <= -5) ? 12 : 8;
-            fileNamesOffset = (fileNameCount * nameFieldSize) + nameInfoOffset - 8;
-            fileNamesSize = getInt(infoFile, S_LONG, fileNamesOffset);
-            crcsOffset = fileNamesSize + fileNamesOffset + 4;
+            fileNamesOffset = (fileNameCount * nameFieldSize) + nameInfoOffset;
+            crcsOffset = getInt(infoFile, S_LONG, fileNamesOffset) + fileNamesOffset + 4;
+            fileNamesSize = crcsOffset - fileNamesOffset;
         }
 }
 
