@@ -342,9 +342,6 @@ void TTDat::get_file_list() {
                     tmpPath += fileList[i].fileName + "/";
                 }
             }
-            
-            std::cout << "Next: " << fileList[i].fileID << ", Prev: " << fileList[i].pathID << ", Name Offset: " << fileList[i].nameOffset 
-                      << ", NameZ: " << i << ", Name: " << fileList[i].pathName + fileList[i].fileName << std::endl;
         }
     }
 }
