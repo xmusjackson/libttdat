@@ -21,7 +21,9 @@ class LIBTTDAT_API TTDat {
         
         fileData* fileList;
         
-        fileData* modFileList;
+        fileData* modFileList; /* Unused for now */
+
+        fileName* fileNames;
 
         loc infoLoc;
 
@@ -38,6 +40,7 @@ class LIBTTDAT_API TTDat {
         unsigned int crcsOffset;
         unsigned int infoOffset;
         unsigned int fileNamesOffset;
+        unsigned int fileOffsOffset;
         unsigned int nameInfoOffset;
         unsigned int newFormatCheck;
 
@@ -70,8 +73,10 @@ class LIBTTDAT_API TTDat {
 
         void get_dat_info();
 
-        void get_file_list();
+        void get_file_offsets();
 
+        void get_file_names();
+        
         void get_crcs();
 
         void get_crc_size();
@@ -117,6 +122,8 @@ class LIBTTDAT_API TTDat {
         int getFileNamesSize() {return fileNamesSize;};
 
         unsigned int getFileNamesOffset(){return fileNamesOffset;};
+        
+        unsigned int getFileOffsOffset(){return fileOffsOffset;};
 
         int getNameFieldSize() {return nameFieldSize;};
 

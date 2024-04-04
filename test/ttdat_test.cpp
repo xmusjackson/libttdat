@@ -28,7 +28,8 @@ int main (int argc, char** argv) {
     TTDat datFile(file.filePath, file.fileName);
 
     std::cout << "Info Offset: " <<  datFile.getHdrOffset() <<  std::endl;
-    std::cout << "File Names Offset: " << datFile.getFileNamesOffset() << std::endl;    
+    std::cout << "File Names Offset: " << datFile.getFileNamesOffset() << std::endl;
+    std::cout << "File Offsets Offset: " << datFile.getFileOffsOffset() << std::endl;
     std::cout << "Name Info Offset: " << datFile.getNameInfoOffset() << std::endl;
     std::cout << "CRCs Offset: " << datFile.getCrcsOffset() << std::endl;    
     std::cout << "Info Size: " << datFile.getInfoSize() << std::endl;

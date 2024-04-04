@@ -51,7 +51,10 @@ TTDat::TTDat(std::string filePath, std::string fileName) {
     }
 
     get_dat_info();
-    get_file_list();
+    get_file_names();
+    get_file_offsets();
+    get_crc_size();
+    get_crcs();
 }
 
 TTDat::~TTDat(){
@@ -227,13 +230,13 @@ void TTDat::get_dat_info() {
         if ((newFormat = is_new_format())) {
             infoType = get_int_be(infoFile, S_LONG, infoOffset + 12);
             newFormatVersion = get_int_be(infoFile, S_LONG);
-
             fileCount = get_int_be(infoFile, S_LONG);
             fileNameCount = get_int_be(infoFile, S_LONG);
             fileNamesSize = get_int_be(infoFile, S_LONG);
             fileNamesOffset = infoOffset + 32;
             nameInfoOffset = fileNamesSize + fileNamesOffset;
-            
+            fileOffsOffset = nameInfoOffset + (fileNameCount * 12) + 4;
+            crcsOffset = fileOffsOffset + (fileCount * 16) + 8;
         } else {
             newInfoOffset = infoFile.tellg();
             nameInfoOffset = newInfoOffset + (fileCount * 16) + 4;
@@ -245,7 +248,7 @@ void TTDat::get_dat_info() {
         }
 }
 
-void TTDat::get_file_list() {
+void TTDat::get_file_names() {
     std::ifstream& infoFile = ((infoLoc) ? hdrFile : datFile);
     unsigned int currOffset;
 
@@ -253,106 +256,107 @@ void TTDat::get_file_list() {
         errorState = TTDAT_OFFSET_ERROR;
         return;
     }
-    int i, j, k = (1, 2, 3);
-    fileList = new fileData[fileNameCount];
+
+    fileNames = new fileName[fileNameCount];
     
     if (newFormat) {
-        /* Get file ids, path ids, and name offsets */
+        /* New Format */
+        int nameOffset;
+
         currOffset = nameInfoOffset + 4;
         infoFile.seekg(currOffset);
+
         for (int i = 0; i < (fileNameCount); i++) {
-            fileList[i].nameOffset = get_int_be(infoFile, S_LONG);
-            if (i == 0)
-                fileList[i].nameOffset += 1;
+            nameOffset = get_int_be(infoFile, S_LONG);
 
-            fileList[i].pathID = get_int_be(infoFile, S_SHORT);
+            fileNames[i].previous = get_int_be(infoFile, S_SHORT);
             if (newFormatVersion >= 2)
-                infoFile.ignore(2);
+                infoFile.ignore(S_SHORT);
 
-            fileList[i].fileID = get_int_be(infoFile, S_SHORT);
+            fileNames[i].next.u = get_int_be(infoFile, S_SHORT);
             currOffset = infoFile.tellg();
-            infoFile.seekg(fileList[i].nameOffset + fileNamesOffset);
-            std::getline(infoFile, fileList[i].fileName, '\0');
-            if ((fileList[i].fileID == 0 && i != 0) || (fileList[i].fileID != 0 && fileList[i - 1].fileID == 0))
-                fileList[i].fileName = fileList[fileList[i].pathID].fileName + "/" + fileList[i].fileName;
+            infoFile.seekg(nameOffset + fileNamesOffset);
+            std::getline(infoFile, fileNames[i].fileName, '\0');
+            if ((fileNames[i].next.u == 0 && i != 0) || (fileNames[i].next.u != 0 && fileNames[i - 1].next.u == 0))
+                fileNames[i].fileName = fileNames[fileNames[i].previous].fileName + "/" + fileNames[i].fileName;
 
             infoFile.seekg(currOffset + 2);
         }
-
-        fileList[fileNameCount - 1].fileID = fileNameCount - 1;
-
-        /*  Get file offsets, 'packed', size, and zsize; 
-            Note: These offets do not align with the above filename list, they align with
-            the below crc list which must be used to get the filesize and offsets for each 
-            */
-
-        infoType = get_int_be(infoFile, S_LONG);       // FIXME: The quickbms script has these checks, but in the files I've tested, these values
-        fileCount = get_int_be(infoFile, S_LONG);      // appear to be the same as those at the beginning of the info offset +4 and +8, respectively.
-                                                            // This needs More Testing; It's possible that some dat variants use a mix of this version number
-
-        struct {unsigned int offset; unsigned int size; int packed; unsigned int zsize;} offsetList[fileCount];
-        unsigned int offsetOr;
-
-        for (unsigned int i = 0; i < fileCount; i++) {
-            if (infoType <= -13) {
-                offsetList[i].packed = get_int_be(infoFile, S_SHORT);
-                infoFile.ignore(2);
-                offsetList[i].offset = get_int_be(infoFile, S_LONG);
-            } else if (infoType <= -11) {
-                offsetList[i].offset = get_int_be(infoFile, S_LONGLONG);
-            } else {
-                offsetList[i].offset = get_int_be(infoFile, S_LONG);
-            }
-
-            offsetList[i].zsize = get_int_be(infoFile, S_LONG);
-            offsetList[i].size = get_int_be(infoFile, S_LONG);
-
-            if (infoType <= -13) {
-                offsetList[i].packed = offsetList[i].packed ? 2 : 0;
-            } else if (infoType <= -10) {
-                offsetList[i].packed = (offsetList[i].size >> 31) ? 2 : 0;
-                offsetList[i].size &= 0x7FFFFFFF;
-            } else {
-                offsetList[i].packed = get_int_be(infoFile, S_BYTE);
-                infoFile.ignore(2);
-                offsetOr = get_int_be(infoFile, S_BYTE);
-                offsetList[i].offset |= offsetOr;
-            }
-        }
-
-        crcsOffset = infoFile.tellg();
     } else {
+        /* Old format */
         infoFile.seekg(nameInfoOffset);
-        int tmpOffset;
-
+        int currOffset;
+        int nameOffset;
         std::string tmpPath = "";
         for (int i = 0; i < fileNameCount; i++) {
-            fileList[i].fileID = get_int(infoFile, S_SHORT);
-            fileList[i].pathID = get_int(infoFile, S_SHORT);
-            fileList[i].nameOffset = get_int(infoFile, S_LONG);
-            if (infoType <= -5) infoFile.ignore(4);
-            tmpOffset = infoFile.tellg();
-            infoFile.seekg(fileNamesOffset + fileList[i].nameOffset);
-            std::getline(infoFile, fileList[i].fileName, '\0');
-            infoFile.seekg(tmpOffset);
-            if (fileList[i].pathID != 0) tmpPath = fileList[(fileList[i].pathID)].pathName;
-            fileList[i].pathName = tmpPath;
-            if (fileList[i].fileID > 0) {
-                if (fileList[i].fileName != "") {
-                    tmpPath += fileList[i].fileName + "/";
+            fileNames[i].next.s = get_int(infoFile, S_SHORT);
+            fileNames[i].previous = get_int(infoFile, S_SHORT);
+            nameOffset = get_int(infoFile, S_LONG);
+            if (infoType <= -5) infoFile.ignore(S_LONG);
+            currOffset = infoFile.tellg();
+            infoFile.seekg(fileNamesOffset + nameOffset);
+            std::getline(infoFile, fileNames[i].fileName, '\0');
+            infoFile.seekg(currOffset);
+            if (fileNames[i].previous != 0) tmpPath = fileNames[(fileNames[i].previous)].pathName;
+            fileNames[i].pathName = tmpPath;
+            if (fileNames[i].next.s > 0) {
+                if (fileNames[i].fileName != "") {
+                    tmpPath += fileNames[i].fileName + "/";
                 }
             }
         }
     }
 }
 
+void TTDat::get_file_offsets() {
+    std::ifstream& infoFile = ((infoLoc) ? hdrFile : datFile);
+    
+    infoFile.seekg(fileOffsOffset);
+
+    if (newFormat) {
+        infoType = get_int_be(infoFile, S_LONG);       // FIXME: The quickbms script has these checks, but in the files I've tested, these values
+        fileCount = get_int_be(infoFile, S_LONG);      // appear to be the same as those at the beginning of the info offset +4 and +8, respectively.
+                                                            // This needs More Testing; It's possible that some dat variants use a mix of this version number
+
+        struct {unsigned int offset; unsigned int size; int packed; unsigned int zsize;} fileList[fileCount];
+        unsigned int offsetOr;
+        for (unsigned int i = 0; i < fileCount; i++) {
+            if (infoType <= -13) {
+                fileList[i].packed = get_int_be(infoFile, S_SHORT);
+                infoFile.ignore(S_SHORT);
+                fileList[i].offset = get_int_be(infoFile, S_LONG);
+            } else if (infoType <= -11) {
+                fileList[i].offset = get_int_be(infoFile, S_LONGLONG);
+            } else {
+                fileList[i].offset = get_int_be(infoFile, S_LONG);
+            }
+
+            fileList[i].zsize = get_int_be(infoFile, S_LONG);
+            fileList[i].size = get_int_be(infoFile, S_LONG);
+
+            if (infoType <= -13) {
+                fileList[i].packed = fileList[i].packed ? 2 : 0;
+            } else if (infoType <= -10) {
+                fileList[i].packed = (fileList[i].size >> 31) ? 2 : 0;
+                fileList[i].size &= 0x7FFFFFFF;
+            } else {
+                fileList[i].packed = get_int_be(infoFile, S_BYTE);
+                infoFile.ignore(S_SHORT);
+                offsetOr = get_int_be(infoFile, S_BYTE);
+                fileList[i].offset |= offsetOr;
+            }
+        }
+    } else {
+
+    }
+}
+
 void TTDat::get_crc_size() {
     std::ifstream& infoFile = ((infoLoc) ? hdrFile : datFile);
-
-
     
 }
 
 void TTDat::get_crcs() {
-    
+    std::ifstream& infoFile = ((infoLoc) ? hdrFile : datFile);
+
 }
