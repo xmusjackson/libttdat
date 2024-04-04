@@ -11,7 +11,7 @@ https://aluigi.altervista.org/quickbms.htm
 
 After initial implementation, this library should provide similar functionality with improved performance. Eventually I wish to include further functionality, such as repacking, adjusting offsets, and potentially even creating dat files from scratch. Currently this library does essentially nothing but the first few steps of identifying offsets. More functionality should appear in the coming weeks.
 
-This is being written in C++20 on a linux machine with portability in mind. This will be ported to at least Windows and macOS once initial unpacking functionality is completed.
+This is being written in C++20 on a linux machine with portability in mind. This will be ported to macOS once initial unpacking functionality is completed.
 
 ### Building
 
