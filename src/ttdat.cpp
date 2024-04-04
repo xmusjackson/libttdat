@@ -14,6 +14,7 @@ TTDat::TTDat() {
     fileNameCount = 0;
     fileNamesSize = 0;
     fileNamesOffset = 0;
+    fileOffsOffset = 0;
     infoType = 0;
     errorState = TTDAT_NO_ERROR;
     datFilePath = "";
@@ -31,6 +32,7 @@ TTDat::TTDat(std::string filePath, std::string fileName) {
     fileNameCount = 0;
     fileNamesSize = 0;
     fileNamesOffset = 0;
+    fileOffsOffset = 0;
     infoType = 0;
     errorState = TTDAT_NO_ERROR;
     datFilePath = filePath;
@@ -252,8 +254,8 @@ void TTDat::get_file_names() {
     std::ifstream& infoFile = ((infoLoc) ? hdrFile : datFile);
     unsigned int currOffset;
 
-    if (fileNameCount * 64 > 1073741824) { // If fileNameCount would result in massive amounts of memory being allocated (something is wrong)
-        errorState = TTDAT_OFFSET_ERROR;
+    if (fileNameCount * sizeof(fileName) > 1073741824) { // If fileNameCount would result in massive amounts of memory being allocated (something is wrong)
+        errorState = TTDAT_OFFSET_ERROR;   // This is rudamentary error checking and a new system should be devised
         return;
     }
 
@@ -294,16 +296,20 @@ void TTDat::get_file_names() {
             nameOffset = get_int(infoFile, S_LONG);
             if (infoType <= -5) infoFile.ignore(S_LONG);
             currOffset = infoFile.tellg();
-            infoFile.seekg(fileNamesOffset + nameOffset);
-            std::getline(infoFile, fileNames[i].fileName, '\0');
-            infoFile.seekg(currOffset);
-            if (fileNames[i].previous != 0) tmpPath = fileNames[(fileNames[i].previous)].pathName;
+            if (nameOffset >= 0) {
+                infoFile.seekg(fileNamesOffset + nameOffset);
+                std::getline(infoFile, fileNames[i].fileName, '\0');
+                infoFile.seekg(currOffset);
+            } else {
+                fileNames[i].fileName = "";
+            }
+            if (fileNames[i].previous != 0 && i != 0) tmpPath = fileNames[(fileNames[i].previous)].pathName;
             fileNames[i].pathName = tmpPath;
             if (fileNames[i].next.s > 0) {
                 if (fileNames[i].fileName != "") {
                     tmpPath += fileNames[i].fileName + "/";
                 }
-            }
+            }   
         }
     }
 }
@@ -311,6 +317,13 @@ void TTDat::get_file_names() {
 void TTDat::get_file_offsets() {
     std::ifstream& infoFile = ((infoLoc) ? hdrFile : datFile);
     
+    if (fileCount * sizeof(fileData) > 1073741824) {     // If fileCount would result in massive amounts of memory being allocated (something is wrong)
+        errorState = TTDAT_OFFSET_ERROR;                 // This is rudamentary error checking and a new system should be devised
+        return;
+    }
+
+    fileList = new fileData[fileCount];
+
     infoFile.seekg(fileOffsOffset);
 
     if (newFormat) {
@@ -318,32 +331,31 @@ void TTDat::get_file_offsets() {
         fileCount = get_int_be(infoFile, S_LONG);      // appear to be the same as those at the beginning of the info offset +4 and +8, respectively.
                                                             // This needs More Testing; It's possible that some dat variants use a mix of this version number
 
-        struct {unsigned int offset; unsigned int size; int packed; unsigned int zsize;} fileList[fileCount];
         unsigned int offsetOr;
         for (unsigned int i = 0; i < fileCount; i++) {
             if (infoType <= -13) {
-                fileList[i].packed = get_int_be(infoFile, S_SHORT);
+                fileList[i].filePacked = get_int_be(infoFile, S_SHORT);
                 infoFile.ignore(S_SHORT);
-                fileList[i].offset = get_int_be(infoFile, S_LONG);
+                fileList[i].fileOffset = get_int_be(infoFile, S_LONG);
             } else if (infoType <= -11) {
-                fileList[i].offset = get_int_be(infoFile, S_LONGLONG);
+                fileList[i].fileOffset = get_int_be(infoFile, S_LONGLONG);
             } else {
-                fileList[i].offset = get_int_be(infoFile, S_LONG);
+                fileList[i].fileOffset = get_int_be(infoFile, S_LONG);
             }
 
-            fileList[i].zsize = get_int_be(infoFile, S_LONG);
-            fileList[i].size = get_int_be(infoFile, S_LONG);
+            fileList[i].fileZSize = get_int_be(infoFile, S_LONG);
+            fileList[i].fileSize = get_int_be(infoFile, S_LONG);
 
             if (infoType <= -13) {
-                fileList[i].packed = fileList[i].packed ? 2 : 0;
+                fileList[i].filePacked = fileList[i].filePacked ? 2 : 0;
             } else if (infoType <= -10) {
-                fileList[i].packed = (fileList[i].size >> 31) ? 2 : 0;
-                fileList[i].size &= 0x7FFFFFFF;
+                fileList[i].filePacked = (fileList[i].fileSize >> 31) ? 2 : 0;
+                fileList[i].fileSize &= 0x7FFFFFFF;
             } else {
-                fileList[i].packed = get_int_be(infoFile, S_BYTE);
+                fileList[i].filePacked = get_int_be(infoFile, S_BYTE);
                 infoFile.ignore(S_SHORT);
                 offsetOr = get_int_be(infoFile, S_BYTE);
-                fileList[i].offset |= offsetOr;
+                fileList[i].fileOffset |= offsetOr;
             }
         }
     } else {
