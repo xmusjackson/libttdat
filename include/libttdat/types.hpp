@@ -16,12 +16,13 @@ enum LIBTTDAT_API TTDatError {
 
 struct LIBTTDAT_API fileData {
     std::string fileName;
+    std::string pathName;
     unsigned long nameCrc;
     unsigned int nameOffset;
     unsigned int fileOffset;
     unsigned int fileSize;
     unsigned int fileZSize;
     unsigned int filePacked;
-    unsigned short fileID;
+    signed short fileID;
     unsigned short pathID;
 };

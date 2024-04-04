@@ -25,36 +25,69 @@ class LIBTTDAT_API TTDat {
 
         loc infoLoc;
 
-        int getInt(std::ifstream& /*file*/, unsigned short /*size*/, unsigned int /*offset*/);
+        int fileCount;
+        int fileNameCount;
+        int fileNamesSize;
+        int nameFieldSize;
+        int infoType;
+        int hdrSize; /* May not be needed, should be ~ 4 larger than infoSize */
+        int infoSize;
+        int newInfoOffset;
+        int newFormatVersion;
 
-        int getIntBE(std::ifstream& /*file*/, unsigned short /*size*/, unsigned int /*offset*/);
+        unsigned int crcsOffset;
+        unsigned int infoOffset;
+        unsigned int fileNamesOffset;
+        unsigned int nameInfoOffset;
+        unsigned int newFormatCheck;
 
-        int getInt(std::ifstream& /*file*/, unsigned short /*size*/);
+        bool newFormat;
+        bool datCompressed;
 
-        int getIntBE(std::ifstream& /*file*/, unsigned short /*size*/);
+        TTDatError errorState;
 
-        int getInfoOffset();
+        unsigned int get_uint(std::ifstream& /*file*/, unsigned short /*size*/, unsigned int /*offset*/);
 
-        void decompressDat();
+        unsigned int get_uint_be(std::ifstream& /*file*/, unsigned short /*size*/, unsigned int /*offset*/);
+
+        unsigned int get_uint(std::ifstream& /*file*/, unsigned short /*size*/);
+
+        unsigned int get_uint_be(std::ifstream& /*file*/, unsigned short /*size*/);
+
+        int get_int(std::ifstream& /*file*/, unsigned short /*size*/, unsigned int /*offset*/);
+
+        int get_int_be(std::ifstream& /*file*/, unsigned short /*size*/, unsigned int /*offset*/);
+
+        int get_int(std::ifstream& /*file*/, unsigned short /*size*/);
+
+        int get_int_be(std::ifstream& /*file*/, unsigned short /*size*/);
+
+        int get_info_offset();
+
+        void decompress_dat();
         
-        void _openDatFile(std::string /*datFileName*/);
+        void open_dat_file(std::string /*datFileName*/);
 
-        void getFileInfo();
+        void get_dat_info();
 
-        void getFileList();
+        void get_file_list();
 
-        bool checkCMP2();
+        void get_crcs();
+
+        void get_crc_size();
+
+        bool check_cmp2();
         
-        bool checkHdrFile();
+        bool check_hdr_file();
 
-        bool isNewFormat();
+        bool is_new_format();
 
         /* Get a string from the contents of a 32 bit integer location. This gets the
         little endian representation.
         Returns: A cstring containing the values from the int's memory location
         Be sure to free the string!
         */
-        char* longToStr(int);
+        char* long_to_str(int);
 
         /*
         Unused for now, but I had a reason for this in mind at one point 
@@ -64,7 +97,7 @@ class LIBTTDAT_API TTDat {
 
         Returns: Uppercase String
         */
-        std::string toUpper(std::string&);
+        std::string to_upper(std::string&);
     
     public: 
         TTDat();
@@ -75,46 +108,39 @@ class LIBTTDAT_API TTDat {
 
         void openDatFile(std::string, std::string);
 
-        bool hasHdr() { return this->infoLoc;};
+        bool hasHdr() { return (this->infoLoc != 0);};
 
-        /*
-         These are public for testing purposes, they will be made private and 
-         necessary getters will be created once initial functionality is 
-         implemented
-         */
+        int getFileCount() {return fileCount;};
 
-        int fileCount;
+        int getFileNameCount() {return fileNameCount;};
 
-        int fileNameCount;
+        int getFileNamesSize() {return fileNamesSize;};
 
-        int fileNamesSize;
+        unsigned int getFileNamesOffset(){return fileNamesOffset;};
 
-        unsigned int fileNamesOffset;
+        int getNameFieldSize() {return nameFieldSize;};
 
-        int nameFieldSize;
+        unsigned int getNameInfoOffset() {return nameInfoOffset;};
 
-        unsigned int nameInfoOffset;
+        int getInfoType() {return infoType;};
 
-        int infoType;
+        int getHdrSize() {return hdrSize;};
 
-        int hdrSize;
-
-        unsigned int crcsOffset;
+        unsigned int getCrcsOffset() {return crcsOffset;};
         
-        unsigned int infoOffset;
+        unsigned int getHdrOffset() {return infoOffset;};
 
-        int newInfoOffset;
+        int getNewInfoOffset() {return newInfoOffset;};
 
-        int infoSize;
+        int getInfoSize() {return infoSize;};
 
-        int newFormatVersion;
+        int getNewFormatVersion() {return newFormatVersion;};
 
-        bool newFormat;
+        bool getNewFormat() {return newFormat;};
 
-        unsigned int newFormatCheck;
+        unsigned int getNewFormatCheck() {return newFormatCheck;};
 
-        bool isCompressed;
+        bool isCompressed() {return datCompressed;};
 
-        TTDatError errorState;
-
+        TTDatError error() {return errorState;};
 };

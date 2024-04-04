@@ -27,20 +27,19 @@ int main (int argc, char** argv) {
 
     TTDat datFile(file.filePath, file.fileName);
 
-    std::cout << "Info Offset: " <<  datFile.infoOffset <<  std::endl;
-    std::cout << "New Info Offset: " <<  datFile.newInfoOffset <<  std::endl;
-    std::cout << "Info Size: " << datFile.infoSize << std::endl;
-    std::cout << "File Count: " << datFile.fileCount << std::endl;
-    std::cout << "Info Type: " << datFile.infoType << std::endl;
-    std::cout << "New Format?: " << (datFile.newFormat ? "True" : "False") << std::endl;
-    if (datFile.newFormat){ std::cout << "New Format Version: " << datFile.newFormatVersion << std::endl; }
+    std::cout << "Info Offset: " <<  datFile.getHdrOffset() <<  std::endl;
+    std::cout << "File Names Offset: " << datFile.getFileNamesOffset() << std::endl;    
+    std::cout << "Name Info Offset: " << datFile.getNameInfoOffset() << std::endl;
+    std::cout << "CRCs Offset: " << datFile.getCrcsOffset() << std::endl;    
+    std::cout << "Info Size: " << datFile.getInfoSize() << std::endl;
+    std::cout << "File Names Size: " << datFile.getFileNamesSize() << std::endl;
+    std::cout << "File Count: " << datFile.getFileCount() << std::endl;
+    std::cout << "File Name Count: " << datFile.getFileNameCount() << std::endl;
+    std::cout << "Info Type: " << datFile.getInfoType() << std::endl;
+    std::cout << "New Format?: " << (datFile.getNewFormat() ? "True" : "False") << std::endl;
+    if (datFile.getNewFormat()){ std::cout << "New Format Version: " << datFile.getNewFormatVersion() << std::endl; }
     std::cout << "Has HDR?: " << (datFile.hasHdr() ? "True" : "False") << std::endl;
-    std::cout << "Is Compressed?: " << (datFile.isCompressed ? "True" : "False") << std::endl;
-    std::cout << "File Name Count: " << datFile.fileNameCount << std::endl;
-    std::cout << "File Names Offset: " << datFile.fileNamesOffset << std::endl;
-    std::cout << "File Names Size: " << datFile.fileNamesSize << std::endl;
-    std::cout << "CRCs Offset: " << datFile.crcsOffset << std::endl;
-    std::cout << "Name Info Offset: " << datFile.nameInfoOffset << std::endl;
+    std::cout << "Is Compressed?: " << (datFile.isCompressed() ? "True" : "False") << std::endl;
 
     return 0;
 }
