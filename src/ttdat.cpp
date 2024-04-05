@@ -1,4 +1,5 @@
 #include "libttdat/ttdat.hpp"
+#include "util.hpp"
 
 #ifdef _WIN32
 #include "win32/pch.h"
@@ -75,68 +76,8 @@ void TTDat::openDatFile (std::string pathName, std::string fileName){
     open_dat_file(pathName + fileName);
 }
 
-/* Reads an int of size 'size' from 'file' at 'offset' as a little endian value */
-int TTDat::get_int(std::ifstream& file, unsigned short size, unsigned int offset) {
-    unsigned char* bytes = (unsigned char*)malloc(size);
-    int int32 = 0;
-
-    file.clear();
-    file.seekg(offset, file.beg);
-    file.read((char*)bytes, 4);
-
-    for (int i = size - 1; i >= 0; i--)
-        int32 = (int32 << 8) + bytes[i];
-
-    free(bytes);
-    return int32;
-}
-
-/* Reads an int of size 'size' from 'file' at 'offset' as a big endian value */
-int TTDat::get_int_be(std::ifstream& file, unsigned short size, unsigned int offset) {
-    unsigned char* bytes = (unsigned char*)malloc(size);
-    int int32 = 0;
-
-    file.clear();
-    file.seekg(offset, file.beg);
-    file.read((char*)bytes, size);
-
-    for (int i = 0; i <= size - 1; i++)
-        int32 = (int32 << 8) + bytes[i];
-
-    free(bytes);
-    return int32;
-}
-
-/* Reads an int of size 'size' from 'file' at 'offset' as a little endian value */
-int TTDat::get_int(std::ifstream& file, unsigned short size) {
-    unsigned char* bytes = (unsigned char*)malloc(size);
-    int int32 = 0;
-
-    file.read((char*)bytes, size);
-
-    for (int i = size - 1; i >= 0; i--)
-        int32 = (int32 << 8) + bytes[i];
-
-    free(bytes);
-    return int32;
-}
-
-/* Reads an int of size 'size' from 'file' at 'offset' as a big endian value */
-int TTDat::get_int_be(std::ifstream& file, unsigned short size) {
-    unsigned char* bytes = (unsigned char*)malloc(size);
-    int int32 = 0;
-
-    file.read((char*)bytes, size);
-
-    for (int i = 0; i <= size - 1; i++)
-        int32 = (int32 << 8) + bytes[i];
-
-    free(bytes);
-    return int32;
-}
-
 int TTDat::get_info_offset () {
-    int tmp = get_int(datFile, S_LONG, 0);
+    int tmp = TTDatUtil::get_int(datFile, S_LONG, 0);
 
         if (tmp & INFO_AND) {
             tmp ^= INFO_XOR;
@@ -149,8 +90,8 @@ int TTDat::get_info_offset () {
 
 bool TTDat::is_new_format() {
     char *infoTypeStr, *fileCountStr;
-    infoTypeStr = long_to_str(infoType);
-    fileCountStr = long_to_str(fileCount);
+    infoTypeStr = TTDatUtil::long_to_str(infoType);
+    fileCountStr = TTDatUtil::long_to_str(fileCount);
 
     if ((!strncmp(infoTypeStr, "\x34\x43\x43\x2e", 4) || !strncmp(infoTypeStr, "\x2e\x43\x43\x34", 4)) ||
        (!strncmp(fileCountStr, "\x34\x43\x43\x2e", 4) || !strncmp(fileCountStr, "\x2e\x43\x43\x34", 4))) {
@@ -200,41 +141,27 @@ bool TTDat::check_hdr_file () {
     return false;
 }
 
-char* TTDat::long_to_str(int integer) {
-    char* intStr = (char*)malloc(5);
-    memcpy(intStr, &integer, 4);
-    intStr[4] = '\0';
-    
-    return intStr;
-}
-
-std::string TTDat::to_upper(std::string& string) {
-    std::transform(string.begin(), string.end(), string.begin(), ::toupper);
-
-    return string;
-}
-
 void TTDat::get_dat_info() {
         std::ifstream& infoFile = ((infoLoc) ? hdrFile : datFile);
 
         if (infoLoc) {
             infoOffset = 12;
-            infoSize = get_int_be(hdrFile, S_LONG, 0); // Size of .HDR - 4
-            infoType = get_int(hdrFile, S_LONG);
-            fileCount = get_int(hdrFile, S_LONG);
+            infoSize = TTDatUtil::get_int_be(hdrFile, S_LONG, 0); // Size of .HDR - 4
+            infoType = TTDatUtil::get_int(hdrFile, S_LONG);
+            fileCount = TTDatUtil::get_int(hdrFile, S_LONG);
         } else {
             infoOffset = get_info_offset();
-            infoSize = get_int(datFile, S_LONG, 4);
-            infoType = get_int(datFile, S_LONG, infoOffset);
-            fileCount = get_int(datFile, S_LONG);
+            infoSize = TTDatUtil::get_int(datFile, S_LONG, 4);
+            infoType = TTDatUtil::get_int(datFile, S_LONG, infoOffset);
+            fileCount = TTDatUtil::get_int(datFile, S_LONG);
         }
         
         if ((newFormat = is_new_format())) {
-            infoType = get_int_be(infoFile, S_LONG, infoOffset + 12);
-            newFormatVersion = get_int_be(infoFile, S_LONG);
-            fileCount = get_int_be(infoFile, S_LONG);
-            fileNameCount = get_int_be(infoFile, S_LONG);
-            fileNamesSize = get_int_be(infoFile, S_LONG);
+            infoType = TTDatUtil::get_int_be(infoFile, S_LONG, infoOffset + 12);
+            newFormatVersion = TTDatUtil::get_int_be(infoFile, S_LONG);
+            fileCount = TTDatUtil::get_int_be(infoFile, S_LONG);
+            fileNameCount = TTDatUtil::get_int_be(infoFile, S_LONG);
+            fileNamesSize = TTDatUtil::get_int_be(infoFile, S_LONG);
             fileNamesOffset = infoOffset + 32;
             nameInfoOffset = fileNamesSize + fileNamesOffset;
             fileOffsOffset = nameInfoOffset + (fileNameCount * 12) + 4;
@@ -242,10 +169,10 @@ void TTDat::get_dat_info() {
         } else {
             newInfoOffset = infoFile.tellg();
             nameInfoOffset = newInfoOffset + (fileCount * 16) + 4;
-            fileNameCount = get_int(infoFile, S_LONG, nameInfoOffset - 4);
+            fileNameCount = TTDatUtil::get_int(infoFile, S_LONG, nameInfoOffset - 4);
             nameFieldSize = (infoType <= -5) ? 12 : 8;
             fileNamesOffset = (fileNameCount * nameFieldSize) + nameInfoOffset + 4;
-            crcsOffset = get_int(infoFile, S_LONG, fileNamesOffset - 4) + fileNamesOffset - 4;
+            crcsOffset = TTDatUtil::get_int(infoFile, S_LONG, fileNamesOffset - 4) + fileNamesOffset - 4;
             fileNamesSize = crcsOffset - fileNamesOffset - 4;
         }
 }
@@ -269,13 +196,13 @@ void TTDat::get_file_names() {
         infoFile.seekg(currOffset);
 
         for (int i = 0; i < (fileNameCount); i++) {
-            nameOffset = get_int_be(infoFile, S_LONG);
+            nameOffset = TTDatUtil::get_int_be(infoFile, S_LONG);
 
-            fileNames[i].previous = get_int_be(infoFile, S_SHORT);
+            fileNames[i].previous = TTDatUtil::get_int_be(infoFile, S_SHORT);
             if (newFormatVersion >= 2)
                 infoFile.ignore(S_SHORT);
 
-            fileNames[i].next.u = get_int_be(infoFile, S_SHORT);
+            fileNames[i].next.u = TTDatUtil::get_int_be(infoFile, S_SHORT);
             currOffset = infoFile.tellg();
             infoFile.seekg(nameOffset + fileNamesOffset);
             std::getline(infoFile, fileNames[i].fileName, '\0');
@@ -291,9 +218,9 @@ void TTDat::get_file_names() {
         int nameOffset;
         std::string tmpPath = "";
         for (int i = 0; i < fileNameCount; i++) {
-            fileNames[i].next.s = get_int(infoFile, S_SHORT);
-            fileNames[i].previous = get_int(infoFile, S_SHORT);
-            nameOffset = get_int(infoFile, S_LONG);
+            fileNames[i].next.s = TTDatUtil::get_int(infoFile, S_SHORT);
+            fileNames[i].previous = TTDatUtil::get_int(infoFile, S_SHORT);
+            nameOffset = TTDatUtil::get_int(infoFile, S_LONG);
             if (infoType <= -5) infoFile.ignore(S_LONG);
             currOffset = infoFile.tellg();
             if (nameOffset >= 0) {
@@ -327,24 +254,24 @@ void TTDat::get_file_offsets() {
     infoFile.seekg(fileOffsOffset);
 
     if (newFormat) {
-        infoType = get_int_be(infoFile, S_LONG);       // FIXME: The quickbms script has these checks, but in the files I've tested, these values
-        fileCount = get_int_be(infoFile, S_LONG);      // appear to be the same as those at the beginning of the info offset +4 and +8, respectively.
+        infoType = TTDatUtil::get_int_be(infoFile, S_LONG);       // FIXME: The quickbms script has these checks, but in the files I've tested, these values
+        fileCount = TTDatUtil::get_int_be(infoFile, S_LONG);      // appear to be the same as those at the beginning of the info offset +4 and +8, respectively.
                                                             // This needs More Testing; It's possible that some dat variants use a mix of this version number
 
         unsigned int offsetOr;
         for (unsigned int i = 0; i < fileCount; i++) {
             if (infoType <= -13) {
-                fileList[i].filePacked = get_int_be(infoFile, S_SHORT);
+                fileList[i].filePacked = TTDatUtil::get_int_be(infoFile, S_SHORT);
                 infoFile.ignore(S_SHORT);
-                fileList[i].fileOffset = get_int_be(infoFile, S_LONG);
+                fileList[i].fileOffset = TTDatUtil::get_int_be(infoFile, S_LONG);
             } else if (infoType <= -11) {
-                fileList[i].fileOffset = get_int_be(infoFile, S_LONGLONG);
+                fileList[i].fileOffset = TTDatUtil::get_int_be(infoFile, S_LONGLONG);
             } else {
-                fileList[i].fileOffset = get_int_be(infoFile, S_LONG);
+                fileList[i].fileOffset = TTDatUtil::get_int_be(infoFile, S_LONG);
             }
 
-            fileList[i].fileZSize = get_int_be(infoFile, S_LONG);
-            fileList[i].fileSize = get_int_be(infoFile, S_LONG);
+            fileList[i].fileZSize = TTDatUtil::get_int_be(infoFile, S_LONG);
+            fileList[i].fileSize = TTDatUtil::get_int_be(infoFile, S_LONG);
 
             if (infoType <= -13) {
                 fileList[i].filePacked = fileList[i].filePacked ? 2 : 0;
@@ -352,9 +279,9 @@ void TTDat::get_file_offsets() {
                 fileList[i].filePacked = (fileList[i].fileSize >> 31) ? 2 : 0;
                 fileList[i].fileSize &= 0x7FFFFFFF;
             } else {
-                fileList[i].filePacked = get_int_be(infoFile, S_BYTE);
+                fileList[i].filePacked = TTDatUtil::get_int_be(infoFile, S_BYTE);
                 infoFile.ignore(S_SHORT);
-                offsetOr = get_int_be(infoFile, S_BYTE);
+                offsetOr = TTDatUtil::get_int_be(infoFile, S_BYTE);
                 fileList[i].fileOffset |= offsetOr;
             }
         }

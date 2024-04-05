@@ -5,13 +5,13 @@ struct pathAndName {
     std::string fileName;
 };
 
-pathAndName getPathAndName(std::string fileAndPath) {
+pathAndName getPathAndName(std::string filename) {
     pathAndName file;
-    size_t lastSlash = fileAndPath.find_last_of("/\\");
-    size_t length = fileAndPath.length();
+    size_t lastSlash = filename.find_last_of("/\\");
+    size_t length = filename.length();
     
-    file.filePath = fileAndPath.substr(0, lastSlash + 1);
-    file.fileName = fileAndPath.substr(lastSlash + 1, length - lastSlash - 1);
+    file.filePath = filename.substr(0, lastSlash + 1);
+    file.fileName = filename.substr(lastSlash + 1, length - lastSlash - 1);
 
     return file;
 }

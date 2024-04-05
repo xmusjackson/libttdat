@@ -49,22 +49,6 @@ class LIBTTDAT_API TTDat {
 
         TTDatError errorState;
 
-        unsigned int get_uint(std::ifstream& /*file*/, unsigned short /*size*/, unsigned int /*offset*/);
-
-        unsigned int get_uint_be(std::ifstream& /*file*/, unsigned short /*size*/, unsigned int /*offset*/);
-
-        unsigned int get_uint(std::ifstream& /*file*/, unsigned short /*size*/);
-
-        unsigned int get_uint_be(std::ifstream& /*file*/, unsigned short /*size*/);
-
-        int get_int(std::ifstream& /*file*/, unsigned short /*size*/, unsigned int /*offset*/);
-
-        int get_int_be(std::ifstream& /*file*/, unsigned short /*size*/, unsigned int /*offset*/);
-
-        int get_int(std::ifstream& /*file*/, unsigned short /*size*/);
-
-        int get_int_be(std::ifstream& /*file*/, unsigned short /*size*/);
-
         int get_info_offset();
 
         void decompress_dat();
@@ -86,23 +70,6 @@ class LIBTTDAT_API TTDat {
         bool check_hdr_file();
 
         bool is_new_format();
-
-        /* Get a string from the contents of a 32 bit integer location. This gets the
-        little endian representation.
-        Returns: A cstring containing the values from the int's memory location
-        Be sure to free the string!
-        */
-        char* long_to_str(int);
-
-        /*
-        Unused for now, but I had a reason for this in mind at one point 
-        Speaks for itself, converts a string to an upper. There's probably 
-        a faster way to do this, but until this function gets used a lot, 
-        this will work fine.
-
-        Returns: Uppercase String
-        */
-        std::string to_upper(std::string&);
     
     public: 
         TTDat();
