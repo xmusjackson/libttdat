@@ -21,11 +21,11 @@ This is being written in C++20 on a linux machine with portability in mind. This
 
  1. Modern g++ or clang++ and llvm
  2. Linux System
- 3. Developement packages for your system, including make and cmake
+ 3. Development packages for your system, including make and cmake
 
 ##### Building
 
-Run the following in a terminal once you have met the requriements above:
+Run the following in a terminal once you have met the requirements above:
 
     git clone https://github.com/xmusjackson/libttdat.git
     cd libttdat
@@ -39,11 +39,11 @@ There is no install target in the CMakeLists yet as this doesn't really do much.
 
  1. Visual Studio 2022
  2. Windows System
- 3. C++ Desktop Developement package and CMake from Visual Studio Installer
+ 3. C++ Desktop Development package and CMake from Visual Studio Installer
 
 ##### Building
 
-Run the following in an MSVC Developer Powershell once you have met the requriements above:
+Run the following in an MSVC Developer Powershell once you have met the requirements above:
 
     git clone https://github.com/xmusjackson/libttdat.git
     cd libttdat
