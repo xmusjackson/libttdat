@@ -89,19 +89,14 @@ int TTDat::get_info_offset () {
 }
 
 bool TTDat::is_new_format() {
-    char *infoTypeStr, *fileCountStr;
-    infoTypeStr = TTDatUtil::long_to_str(infoType);
-    fileCountStr = TTDatUtil::long_to_str(fileCount);
+    char* infoTypeStr = TTDatUtil::long_to_str(infoType);
+    char *fileCountStr = TTDatUtil::long_to_str(fileCount);
 
     if ((!strncmp(infoTypeStr, "\x34\x43\x43\x2e", 4) || !strncmp(infoTypeStr, "\x2e\x43\x43\x34", 4)) ||
        (!strncmp(fileCountStr, "\x34\x43\x43\x2e", 4) || !strncmp(fileCountStr, "\x2e\x43\x43\x34", 4))) {
-        free(infoTypeStr);
-        free(fileCountStr);
         return true;
     }
 
-    free(infoTypeStr);
-    free(fileCountStr);
     return false;
 }
 
@@ -111,17 +106,17 @@ void TTDat::decompress_dat () {
 }
 
 bool TTDat::check_cmp2 () {
-    char* cmpStr = (char*)malloc(17);
+    char* cmpStr = new char[17];
     datFile.seekg(0);
     datFile.read(cmpStr, 16);
 
     if (strncmp(cmpStr, "CMP2CMP2CMP2CMP2", 16) == 0) {
         datCompressed = true;
-        free(cmpStr);
+        delete[] cmpStr;
         return true;
     }
     
-    free(cmpStr);
+    delete[] cmpStr;
     return false;
 }
 
