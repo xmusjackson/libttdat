@@ -302,20 +302,20 @@ void TTDat::get_crc_size() {
     /*
      * The method used to determine the size of the CRCs requires more research.
      * The following implementation is adapted from the quickbms script and is a little hacky.
-     * This is subject to change.
+     * This is subject to change. Error handling should be implemented at the least.
      */
 
-    int crcs32EndOffset = crcsOffset + (fileCount * 8);
-    int crcs64EndOffset = crcsOffset + (fileCount * 16);
+    int crcs32EndOffset = crcsOffset + (fileCount * 4);
+    int crcs64EndOffset = crcsOffset + (fileCount * 8);
     int falsePositiveCheck;
 
     if (newFormat) {
-        int falsePositiveCheck = ttdatutil::get_int_be(infoFile ,S_LONG ,crcs32EndOffset);
+        falsePositiveCheck = ttdatutil::get_int_be(infoFile, S_LONG, crcs32EndOffset);
     } else {
-        int falsePositiveCheck = ttdatutil::get_int(infoFile ,S_LONG ,crcs32EndOffset);
+        falsePositiveCheck = ttdatutil::get_int(infoFile, S_LONG, crcs32EndOffset);
     }
-    
-    if (falsePositiveCheck == 0 || falsePositiveCheck == 9){ 
+
+    if (falsePositiveCheck == 0 || falsePositiveCheck == 9){  // 9 for The Force Awakens, otherwise the end of these lists are usually zero
         crc64 = false;
         return;
     }
