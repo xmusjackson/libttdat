@@ -310,9 +310,9 @@ void TTDat::get_crc_size() {
     int falsePositiveCheck;
 
     if (newFormat) {
-        int falsePositiveCheck = ttdatutil::get_int_be(infoFile,S_LONG ,crcs32EndOffset);
+        int falsePositiveCheck = ttdatutil::get_int_be(infoFile ,S_LONG ,crcs32EndOffset);
     } else {
-        int falsePositiveCheck = ttdatutil::get_int(infoFile,S_LONG ,crcs32EndOffset);
+        int falsePositiveCheck = ttdatutil::get_int(infoFile ,S_LONG ,crcs32EndOffset);
     }
     
     if (falsePositiveCheck == 0 || falsePositiveCheck == 9){ 
