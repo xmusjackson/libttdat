@@ -46,6 +46,7 @@ class LIBTTDAT_API TTDat {
 
         bool newFormat;
         bool datCompressed;
+        bool crc64;
 
         TTDatError errorState;
 
@@ -53,7 +54,7 @@ class LIBTTDAT_API TTDat {
 
         void decompress_dat();
         
-        void open_dat_file(std::string /*datFileName*/);
+        void open_dat_file(std::string fileName);
 
         void get_dat_info();
 
@@ -74,11 +75,11 @@ class LIBTTDAT_API TTDat {
     public: 
         TTDat();
 
-        TTDat(std::string, std::string);
+        TTDat(std::string filePath, std::string fileName);
 
         ~TTDat();
 
-        void openDatFile(std::string, std::string);
+        void openDatFile(std::string filePath, std::string fileName);
 
         bool hasHdr() { return (this->infoLoc != 0);};
 
@@ -115,6 +116,8 @@ class LIBTTDAT_API TTDat {
         unsigned int getNewFormatCheck() {return newFormatCheck;};
 
         bool isCompressed() {return datCompressed;};
+
+        bool isCrc64() {return crc64;};
 
         TTDatError error() {return errorState;};
 };

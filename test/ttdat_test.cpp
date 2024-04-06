@@ -41,6 +41,7 @@ int main (int argc, char** argv) {
     if (datFile.getNewFormat()){ std::cout << "New Format Version: " << datFile.getNewFormatVersion() << std::endl; }
     std::cout << "Has HDR?: " << (datFile.hasHdr() ? "True" : "False") << std::endl;
     std::cout << "Is Compressed?: " << (datFile.isCompressed() ? "True" : "False") << std::endl;
+    std::cout << "CRC Size: " << (datFile.isCrc64() ? "64" : "32") << std::endl;
 
     return 0;
 }
