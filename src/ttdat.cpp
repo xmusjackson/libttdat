@@ -60,7 +60,6 @@ TTDat::TTDat(std::string filePath, std::string fileName)
 
     get_file_names();
     get_file_offsets();
-    get_crc_size();
     get_crcs();
 }
 
@@ -172,6 +171,7 @@ void TTDat::get_dat_info() {
             nameInfoOffset = fileNamesSize + fileNamesOffset;
             fileOffsOffset = nameInfoOffset + (fileNameCount * 12) + 4;
             crcsOffset = fileOffsOffset + (fileCount * 16) + 8;
+            get_crc_size();
         } else {
             newInfoOffset = infoFile.tellg();
             nameInfoOffset = newInfoOffset + (fileCount * 16) + 4;
@@ -180,6 +180,8 @@ void TTDat::get_dat_info() {
             fileNamesOffset = (fileNameCount * nameFieldSize) + nameInfoOffset + 4;
             crcsOffset = ttdatutil::get_int(infoFile, S_LONG, fileNamesOffset - 4) + fileNamesOffset - 4;
             fileNamesSize = crcsOffset - fileNamesOffset - 4;
+            get_crc_size();
+            fileOffsOffset = infoOffset + (newInfoOffset - infoOffset); // FIXME: Probably breaks HDRs, needs testing
         }
 }
 
@@ -203,8 +205,8 @@ void TTDat::get_file_names() {
 
         for (int i = 0; i < (fileNameCount); i++) {
             nameOffset = ttdatutil::get_int_be(infoFile, S_LONG);
-
             fileNames[i].previous = ttdatutil::get_int_be(infoFile, S_SHORT);
+
             if (newFormatVersion >= 2)
                 infoFile.ignore(S_SHORT);
 
@@ -212,13 +214,22 @@ void TTDat::get_file_names() {
             currOffset = infoFile.tellg();
             infoFile.seekg(nameOffset + fileNamesOffset);
             std::getline(infoFile, fileNames[i].fileName, '\0');
-            if ((fileNames[i].next.u == 0 && i != 0) || (fileNames[i].next.u != 0 && fileNames[i - 1].next.u == 0))
-                fileNames[i].fileName = fileNames[fileNames[i].previous].fileName + "/" + fileNames[i].fileName;
 
+            if ((fileNames[i].next.u == 0 && i != 0) || (fileNames[i].next.u != 0 && fileNames[i - 1].next.u == 0))
+                fileNames[i].fileName = fileNames[fileNames[i].previous].fileName + "\\" + fileNames[i].fileName;
+            
+            if (fileNames[i - 1].next.u == 0) {
+                if (crc64) {
+                    fileNames[i].crc = ttdatcrc::crc_fnv_1a_64(ttdatutil::to_upper(fileNames[i].fileName).c_str());
+                } else {
+                    fileNames[i].crc = ttdatcrc::crc_fnv_1a_32(ttdatutil::to_upper(fileNames[i].fileName).c_str());
+                }
+            }
+            
             infoFile.seekg(currOffset + 2);
         }
     } else {
-        /* Old format */
+        /* Old format  *This implementation could use some work, but it works as it is */
         infoFile.seekg(nameInfoOffset);
         int currOffset;
         int nameOffset;
@@ -229,6 +240,7 @@ void TTDat::get_file_names() {
             nameOffset = ttdatutil::get_int(infoFile, S_LONG);
             if (infoType <= -5) infoFile.ignore(S_LONG);
             currOffset = infoFile.tellg();
+
             if (nameOffset >= 0) {
                 infoFile.seekg(fileNamesOffset + nameOffset);
                 std::getline(infoFile, fileNames[i].fileName, '\0');
@@ -236,13 +248,18 @@ void TTDat::get_file_names() {
             } else {
                 fileNames[i].fileName = "";
             }
+
             if (fileNames[i].previous != 0 && i != 0) tmpPath = fileNames[(fileNames[i].previous)].pathName;
             fileNames[i].pathName = tmpPath;
+
             if (fileNames[i].next.s > 0) {
                 if (fileNames[i].fileName != "") {
-                    tmpPath += fileNames[i].fileName + "/";
+                    tmpPath += fileNames[i].fileName + "\\";
                 }
-            }   
+            }
+
+            fileNames[i].fileName = fileNames[i].pathName + fileNames[i].fileName;
+            fileNames[i].crc = ttdatcrc::crc_fnv_1a_32(ttdatutil::to_upper(fileNames[i].fileName).c_str());
         }
     }
 }
@@ -292,7 +309,18 @@ void TTDat::get_file_offsets() {
             }
         }
     } else {
-        /* FIXME: Need to implement fileOffsOffset for old format first */
+        unsigned int offsetAdd;
+        for (int i{0}; i < fileCount; i++){
+            fileList[i].fileOffset = ttdatutil::get_int(infoFile, S_LONG);
+            fileList[i].fileZSize = ttdatutil::get_int(infoFile, S_LONG);
+            fileList[i].fileSize = ttdatutil::get_int(infoFile, S_LONG);
+            fileList[i].filePacked = ttdatutil::get_int(infoFile, 3);
+            offsetAdd = ttdatutil::get_int(infoFile, S_BYTE);
+            if (infoType != -1)
+                fileList[i].fileOffset <<= 8;
+
+            fileList[i].fileOffset += offsetAdd;
+        }
     }
 }
 
@@ -305,8 +333,8 @@ void TTDat::get_crc_size() {
      * This is subject to change. Error handling should be implemented at the least.
      */
 
-    int crcs32EndOffset = crcsOffset + (fileCount * 4);
-    int crcs64EndOffset = crcsOffset + (fileCount * 8);
+    unsigned int crcs32EndOffset = crcsOffset + (fileCount * 4);
+    unsigned int crcs64EndOffset = crcsOffset + (fileCount * 8);
     int falsePositiveCheck;
 
     if (newFormat) {
@@ -327,5 +355,18 @@ void TTDat::get_crc_size() {
 
 void TTDat::get_crcs() {
     std::ifstream& infoFile = ((infoLoc) ? hdrFile : datFile);
+    unsigned short intSize = (crc64) ? S_LONGLONG : S_LONG;
 
+    infoFile.seekg(crcsOffset);
+
+    if (newFormat) {
+        for (int i = 0; i < fileCount; i++) {
+            fileList[i].nameCrc = ttdatutil::get_int_be(infoFile, intSize);
+        }
+    } else {
+        for (int i = 0; i < fileCount; i++) {
+            fileList[i].nameCrc = ttdatutil::get_int(infoFile, intSize);
+        }
+    }
+    
 }

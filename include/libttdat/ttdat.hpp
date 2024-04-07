@@ -3,7 +3,8 @@
 #include <string>
 #include <filesystem>
 #include <algorithm>
-#include <string.h>
+#include <cstring>
+#include <cstdint>
 
 #include "win32.hpp"
 #include "types.hpp"
@@ -12,15 +13,12 @@
 class LIBTTDAT_API TTDat {
     private:
         std::ifstream datFile;
-
         std::ifstream hdrFile;
 
         std::string datFilePath;
-
         std::string datFileName;
         
         fileData* fileList;
-        
         fileData* modFileList; /* Unused for now */
 
         fileName* fileNames;
@@ -81,43 +79,43 @@ class LIBTTDAT_API TTDat {
 
         void openDatFile(std::string filePath, std::string fileName);
 
-        bool hasHdr() { return (this->infoLoc != 0);};
+        const bool hasHdr() { return (this->infoLoc != 0);};
 
-        int getFileCount() {return fileCount;};
+        const int getFileCount() {return fileCount;};
 
-        int getFileNameCount() {return fileNameCount;};
+        const int getFileNameCount() {return fileNameCount;};
 
-        int getFileNamesSize() {return fileNamesSize;};
+        const int getFileNamesSize() {return fileNamesSize;};
 
-        unsigned int getFileNamesOffset(){return fileNamesOffset;};
+        const unsigned int getFileNamesOffset(){return fileNamesOffset;};
         
-        unsigned int getFileOffsOffset(){return fileOffsOffset;};
+        const unsigned int getFileOffsOffset(){return fileOffsOffset;};
 
-        int getNameFieldSize() {return nameFieldSize;};
+        const int getNameFieldSize() {return nameFieldSize;};
 
-        unsigned int getNameInfoOffset() {return nameInfoOffset;};
+        const unsigned int getNameInfoOffset() {return nameInfoOffset;};
 
-        int getInfoType() {return infoType;};
+        const int getInfoType() {return infoType;};
 
-        int getHdrSize() {return hdrSize;};
+        const int getHdrSize() {return hdrSize;};
 
-        unsigned int getCrcsOffset() {return crcsOffset;};
+        const unsigned int getCrcsOffset() {return crcsOffset;};
         
-        unsigned int getHdrOffset() {return infoOffset;};
+        const unsigned int getHdrOffset() {return infoOffset;};
 
-        int getNewInfoOffset() {return newInfoOffset;};
+        const int getNewInfoOffset() {return newInfoOffset;};
 
-        int getInfoSize() {return infoSize;};
+        const int getInfoSize() {return infoSize;};
 
-        int getNewFormatVersion() {return newFormatVersion;};
+        const int getNewFormatVersion() {return newFormatVersion;};
 
-        bool getNewFormat() {return newFormat;};
+        const bool getNewFormat() {return newFormat;};
 
-        unsigned int getNewFormatCheck() {return newFormatCheck;};
+        const unsigned int getNewFormatCheck() {return newFormatCheck;};
 
-        bool isCompressed() {return datCompressed;};
+        const bool isCompressed() {return datCompressed;};
 
-        bool isCrc64() {return crc64;};
+        const bool isCrc64() {return crc64;};
 
-        TTDatError error() {return errorState;};
+        const TTDatError error() {return errorState;};
 };
