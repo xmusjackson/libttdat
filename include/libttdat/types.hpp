@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdint>
 
 #include "win32.hpp"
 
@@ -17,7 +18,7 @@ enum LIBTTDAT_API TTDatError {
 
 struct LIBTTDAT_API fileData {
     std::string fileName;
-    unsigned long nameCrc;
+    unsigned long long nameCrc;
     unsigned int nameOffset;
     unsigned int fileOffset;
     unsigned int fileSize;
@@ -28,6 +29,7 @@ struct LIBTTDAT_API fileData {
 struct LIBTTDAT_API fileName {
     std::string fileName;
     std::string pathName;
+    uint64_t crc;
     unsigned short previous;
     union {
         unsigned int u;
