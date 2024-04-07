@@ -1,6 +1,6 @@
 #include "util.hpp"
 
-int ttdatutil::get_int(std::ifstream& file, unsigned short size, unsigned int offset) {
+int64_t ttdatutil::get_int(std::ifstream& file, unsigned short size, unsigned int offset) {
     unsigned char* bytes = (unsigned char*)malloc(size);
     int int32 = 0;
 
@@ -15,7 +15,7 @@ int ttdatutil::get_int(std::ifstream& file, unsigned short size, unsigned int of
     return int32;
 }
 
-int ttdatutil::get_int_be(std::ifstream& file, unsigned short size, unsigned int offset) {
+int64_t ttdatutil::get_int_be(std::ifstream& file, unsigned short size, unsigned int offset) {
     unsigned char* bytes = (unsigned char*)malloc(size);
     int int32 = 0;
 
@@ -30,7 +30,7 @@ int ttdatutil::get_int_be(std::ifstream& file, unsigned short size, unsigned int
     return int32;
 }
 
-int ttdatutil::get_int(std::ifstream& file, unsigned short size) {
+int64_t ttdatutil::get_int(std::ifstream& file, unsigned short size) {
     unsigned char* bytes = (unsigned char*)malloc(size);
     int int32 = 0;
 
@@ -43,7 +43,7 @@ int ttdatutil::get_int(std::ifstream& file, unsigned short size) {
     return int32;
 }
 
-int ttdatutil::get_int_be(std::ifstream& file, unsigned short size) {
+int64_t ttdatutil::get_int_be(std::ifstream& file, unsigned short size) {
     unsigned char* bytes = (unsigned char*)malloc(size);
     int int32 = 0;
 
@@ -64,12 +64,12 @@ char* ttdatutil::long_to_str(int integer) {
     return intStr;
 }
 
-const char* ttdatutil::to_upper(char* string) {
-    size_t length = std::strlen(string);
+std::string ttdatutil::to_upper(std::string str) {
+    size_t length = str.length();
 
     for (int i{0}; i < length; i++) {
-        string[i] = std::toupper(string[i]);
+        str[i] = std::toupper(str[i]);
     }
 
-    return string;
+    return str;
 }

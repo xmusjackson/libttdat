@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstring>
 #include <fstream>
+#include <cstdint>
 
 namespace ttdatutil {
 
@@ -13,9 +14,9 @@ namespace ttdatutil {
          * @note Casting can be done to get the desired integer type (unsigned, signed). This function parses the location
          * as big endian.
          * 
-         * @return Signed 32 bit integer
+         * @return Signed 64 bit integer
         */
-        int get_int(std::ifstream& file, unsigned short size, unsigned int offset);
+        int64_t get_int(std::ifstream& file, unsigned short size, unsigned int offset);
 
         /**
          * @brief Gets a big endian integer from the input file at a specified offset
@@ -26,9 +27,9 @@ namespace ttdatutil {
          * @note Casting can be done to get the desired integer type (unsigned, signed). This function parses the location
          * as big endian.
          * 
-         * @return Signed 32 bit integer
+         * @return Signed 64 bit integer
         */
-        int get_int_be(std::ifstream& file, unsigned short size, unsigned int offset);
+        int64_t get_int_be(std::ifstream& file, unsigned short size, unsigned int offset);
 
         /**
          * @brief Gets a little endian integer from the input file at the current offset
@@ -38,9 +39,9 @@ namespace ttdatutil {
          * @note Casting can be done to get the desired integer type (unsigned, signed). This function parses the location
          * as big endian.
          * 
-         * @return Signed 32 bit integer
+         * @return Signed 64 bit integer
         */
-        int get_int(std::ifstream& file, unsigned short size);
+        int64_t get_int(std::ifstream& file, unsigned short size);
 
         /**
          * @brief Gets a big endian integer from the input file at the current offset
@@ -50,9 +51,9 @@ namespace ttdatutil {
          * @note Casting can be done to get the desired integer type (unsigned, signed). This function parses the location
          * as big endian.
          * 
-         * @return Signed 32 bit integer
+         * @return Signed 64 bit integer
         */
-        int get_int_be(std::ifstream& file, unsigned short size);
+        int64_t get_int_be(std::ifstream& file, unsigned short size);
 
         /** 
          * @param integer Integer to convert to string
@@ -72,5 +73,6 @@ namespace ttdatutil {
          * 
          * @return A pointer to the uppercase string
         */
-        const char* to_upper(char* string);
+        std::string to_upper(std::string str);
+        
 }
