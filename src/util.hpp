@@ -66,13 +66,13 @@ namespace ttdatutil {
         char* long_to_str(int integer);
 
         /**
-         * @param string String to convert to uppercase
+         * @param str String to convert to uppercase
          * 
-         * @brief Converts a cstring to uppercase
-         * @note This function uses std::toupper() and modifies the provided string
+         * @brief Converts a std::string to uppercase
+         * @note This function uses std::toupper() and does not modify the provided string
          * 
-         * @return A pointer to the uppercase string
+         * @return A std::string containing the converted string
         */
         std::string to_upper(std::string str);
-        
+
 }
