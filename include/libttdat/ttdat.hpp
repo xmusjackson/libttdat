@@ -69,6 +69,8 @@ class LIBTTDAT_API TTDat {
 
         void match_crcs(); /* Match crcs from fileList to those from nameList */
 
+        void alloc_lists();
+
         bool check_cmp2();
         
         bool check_hdr_file();

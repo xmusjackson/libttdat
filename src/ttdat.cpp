@@ -21,7 +21,9 @@ TTDat::TTDat()
     errorState(TTDAT_NO_ERROR),
     datCompressed(false),
     infoLoc(DAT),
-    crc64(false)
+    crc64(false),
+    fileList(nullptr),
+    nameList(nullptr)
 {}
 
 TTDat::TTDat(std::string filePath, std::string fileName)
@@ -41,7 +43,9 @@ TTDat::TTDat(std::string filePath, std::string fileName)
     datFileName(fileName),
     datCompressed(false),
     infoLoc(DAT),
-    crc64(false)
+    crc64(false),
+    fileList(nullptr),
+    nameList(nullptr)
 {
     open_dat_file(datFilePath + datFileName);
 
@@ -57,6 +61,7 @@ TTDat::TTDat(std::string filePath, std::string fileName)
     }
 
     get_dat_info();
+    alloc_lists();
 
     get_file_names();
     get_file_offsets();
@@ -72,8 +77,8 @@ TTDat::~TTDat(){
     if (hdrFile.is_open())
         hdrFile.close();
 
-    delete[] fileList;
-    delete[] nameList;
+    if (fileList != nullptr) delete[] fileList;
+    if (nameList != nullptr) delete[] nameList;
 }
 
 void TTDat::open_dat_file (std::string fileName){
@@ -191,11 +196,6 @@ void TTDat::get_file_names() {
     std::ifstream& infoFile = ((infoLoc) ? hdrFile : datFile);
     unsigned int currOffset;
 
-    if (fileNameCount * sizeof(fileName) > 1073741824) { // If fileNameCount would result in massive amounts of memory being allocated (something is wrong)
-        errorState = TTDAT_OFFSET_ERROR;   // This is rudamentary error checking and a new system should be devised
-        return;
-    }
-
     nameList = new fileName[fileNameCount];
     
     if (newFormat) {
@@ -269,11 +269,6 @@ void TTDat::get_file_names() {
 
 void TTDat::get_file_offsets() {
     std::ifstream& infoFile = ((infoLoc) ? hdrFile : datFile);
-    
-    if (fileCount * sizeof(fileData) > 1073741824) {     // If fileCount would result in massive amounts of memory being allocated (something is wrong)
-        errorState = TTDAT_OFFSET_ERROR;                 // This is rudamentary error checking and a new system should be devised
-        return;
-    }
 
     fileList = new fileData[fileCount];
 
@@ -282,9 +277,9 @@ void TTDat::get_file_offsets() {
     if (newFormat) {
         infoType = ttdatutil::get_int_be(infoFile, S_LONG);       // FIXME: The quickbms script has these checks, but in the files I've tested, these values
         fileCount = ttdatutil::get_int_be(infoFile, S_LONG);      // appear to be the same as those at the beginning of the info offset +4 and +8, respectively.
-                                                            // This needs More Testing; It's possible that some dat variants use a mix of this version number
-
+                                                                  // This needs More Testing; It's possible that some dat variants use a mix of this version number
         unsigned int offsetOr;
+
         for (unsigned int i = 0; i < fileCount; i++) {
             if (infoType <= -13) {
                 fileList[i].filePacked = ttdatutil::get_int_be(infoFile, S_SHORT);
@@ -300,19 +295,20 @@ void TTDat::get_file_offsets() {
             fileList[i].fileSize = ttdatutil::get_int_be(infoFile, S_LONG);
 
             if (infoType <= -13) {
-                fileList[i].filePacked = fileList[i].filePacked ? 2 : 0;
+                fileList[i].filePacked = fileList[i].filePacked ? 1 : 0;
             } else if (infoType <= -10) {
-                fileList[i].filePacked = (fileList[i].fileSize >> 31) ? 2 : 0;
+                fileList[i].filePacked = (fileList[i].fileSize >> 31) ? 1 : 0;
                 fileList[i].fileSize &= 0x7FFFFFFF;
             } else {
                 fileList[i].filePacked = ttdatutil::get_int_be(infoFile, S_BYTE);
                 infoFile.ignore(S_SHORT);
                 offsetOr = ttdatutil::get_int_be(infoFile, S_BYTE);
-                fileList[i].fileOffset |= offsetOr;
+                fileList[i].fileOffset = (fileList[i].fileOffset << 8) | offsetOr;
             }
         }
     } else {
-        unsigned int offsetAdd;
+        unsigned short offsetAdd;
+
         for (int i{0}; i < fileCount; i++){
             fileList[i].fileOffset = ttdatutil::get_int(infoFile, S_LONG);
             fileList[i].fileZSize = ttdatutil::get_int(infoFile, S_LONG);
@@ -380,4 +376,23 @@ void TTDat::match_crcs() {
         }
     }
 
+}
+
+void TTDat::alloc_lists() {
+    // There's probably a better way to do this, but this works.
+    // Future error handling might render this function unneeded.
+
+    if (fileCount * sizeof(fileData) > 1073741824) {     // If fileCount would result in massive amounts of memory being allocated (something is wrong)
+        errorState = TTDAT_OFFSET_ERROR;                 // This is rudamentary error checking and a new system should be devised
+        return;
+    }
+
+    fileList = new fileData[fileCount];
+
+    if (fileNameCount * sizeof(fileName) > 1073741824) { // If fileNameCount would result in massive amounts of memory being allocated (something is wrong)
+        errorState = TTDAT_OFFSET_ERROR;   // This is rudamentary error checking and a new system should be devised
+        return;
+    }
+
+    nameList = new fileName[fileNameCount];
 }
