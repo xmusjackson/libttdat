@@ -9,7 +9,9 @@ This is in it's early developmental stages and I don't have a lot of time to dev
 This is being written with inspiration from the ttgames quickbms script located at the quickbms homepage: 
 https://aluigi.altervista.org/quickbms.htm
 
-After initial implementation, this library should provide similar functionality with improved performance. Eventually I wish to include further functionality, such as repacking, adjusting offsets, and potentially even creating dat files from scratch. Currently this library gathers the important offsets (but not all neccessary for repacking, etc.) and begins to build a file list (not fully implemented).
+After initial implementation, this library should provide similar functionality with improved performance. Eventually I wish to include further functionality, such as repacking, adjusting offsets, and potentially even creating dat files from scratch. 
+
+Currently this library gathers the important offsets (but not all neccessary for repacking, etc.) and builds a complete file list with file offsets, names, compressed sizes, sizes, and compression state (There's likely more to discover here, packed could refer to exact decompression type in later dat versions). Further implementation will decipher each file's compression type (if present). Near future plans include bringing in decompression libraries and implementing file extraction and decompression methods.
 
 This is being written in C++20 with portability in mind. This will be ported to macOS once initial unpacking functionality is completed.
 
