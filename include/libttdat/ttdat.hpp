@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cstring>
 #include <cstdint>
+#include <unordered_map>
 
 #include "win32.hpp"
 #include "types.hpp"
@@ -17,11 +18,13 @@ class LIBTTDAT_API TTDat {
 
         std::string datFilePath;
         std::string datFileName;
+
+        std::unordered_map<uint64_t, std::string> crcNameList;
         
         fileData* fileList;
         fileData* modFileList; /* Unused for now */
 
-        fileName* fileNames;
+        fileName* nameList;
 
         loc infoLoc;
 
@@ -63,6 +66,8 @@ class LIBTTDAT_API TTDat {
         void get_crcs();
 
         void get_crc_size();
+
+        void match_crcs(); /* Match crcs from fileList to those from nameList */
 
         bool check_cmp2();
         

@@ -61,6 +61,8 @@ TTDat::TTDat(std::string filePath, std::string fileName)
     get_file_names();
     get_file_offsets();
     get_crcs();
+
+    match_crcs();
 }
 
 TTDat::~TTDat(){
@@ -71,7 +73,7 @@ TTDat::~TTDat(){
         hdrFile.close();
 
     delete[] fileList;
-    delete[] fileNames;
+    delete[] nameList;
 }
 
 void TTDat::open_dat_file (std::string fileName){
@@ -194,38 +196,41 @@ void TTDat::get_file_names() {
         return;
     }
 
-    fileNames = new fileName[fileNameCount];
+    nameList = new fileName[fileNameCount];
     
     if (newFormat) {
         /* New Format */
-        int nameOffset;
+        unsigned int nameOffset;
 
         currOffset = nameInfoOffset + 4;
         infoFile.seekg(currOffset);
 
         for (int i = 0; i < (fileNameCount); i++) {
             nameOffset = ttdatutil::get_int_be(infoFile, S_LONG);
-            fileNames[i].previous = ttdatutil::get_int_be(infoFile, S_SHORT);
+            nameList[i].previous = ttdatutil::get_int_be(infoFile, S_SHORT);
 
             if (newFormatVersion >= 2)
                 infoFile.ignore(S_SHORT);
 
-            fileNames[i].next.u = ttdatutil::get_int_be(infoFile, S_SHORT);
+            nameList[i].next.u = ttdatutil::get_int_be(infoFile, S_SHORT);
             currOffset = infoFile.tellg();
-            infoFile.seekg(nameOffset + fileNamesOffset);
-            std::getline(infoFile, fileNames[i].fileName, '\0');
 
-            if ((fileNames[i].next.u == 0 && i != 0) || (fileNames[i].next.u != 0 && fileNames[i - 1].next.u == 0))
-                fileNames[i].fileName = fileNames[fileNames[i].previous].fileName + "\\" + fileNames[i].fileName;
+            if (i != 0) {
+                infoFile.seekg(nameOffset + fileNamesOffset);
+                std::getline(infoFile, nameList[i].fileName, '\0');
+            }
+
+            if (i != 0 && nameList[i].previous != 0) // if previous is 0, path is root dir
+                nameList[i].fileName = nameList[nameList[i].previous].fileName + "\\" + nameList[i].fileName;
             
-            if (fileNames[i - 1].next.u == 0) {
+            if (nameList[i - 1].next.u == 0) {
                 if (crc64) {
-                    fileNames[i].crc = ttdatcrc::crc_fnv_1a_64(ttdatutil::to_upper(fileNames[i].fileName).c_str());
+                    crcNameList[ttdatcrc::crc_fnv_1a_64(ttdatutil::to_upper(nameList[i].fileName).c_str())] = nameList[i].fileName;
                 } else {
-                    fileNames[i].crc = ttdatcrc::crc_fnv_1a_32(ttdatutil::to_upper(fileNames[i].fileName).c_str());
+                    crcNameList[ttdatcrc::crc_fnv_1a_32(ttdatutil::to_upper(nameList[i].fileName).c_str())] = nameList[i].fileName;
                 }
             }
-            
+
             infoFile.seekg(currOffset + 2);
         }
     } else {
@@ -235,31 +240,29 @@ void TTDat::get_file_names() {
         int nameOffset;
         std::string tmpPath = "";
         for (int i = 0; i < fileNameCount; i++) {
-            fileNames[i].next.s = ttdatutil::get_int(infoFile, S_SHORT);
-            fileNames[i].previous = ttdatutil::get_int(infoFile, S_SHORT);
+            nameList[i].next.s = ttdatutil::get_int(infoFile, S_SHORT);
+            nameList[i].previous = ttdatutil::get_int(infoFile, S_SHORT);
             nameOffset = ttdatutil::get_int(infoFile, S_LONG);
             if (infoType <= -5) infoFile.ignore(S_LONG);
             currOffset = infoFile.tellg();
 
             if (nameOffset >= 0) {
                 infoFile.seekg(fileNamesOffset + nameOffset);
-                std::getline(infoFile, fileNames[i].fileName, '\0');
+                std::getline(infoFile, nameList[i].fileName, '\0');
                 infoFile.seekg(currOffset);
             } else {
-                fileNames[i].fileName = "";
+                nameList[i].fileName = "";
             }
 
-            if (fileNames[i].previous != 0 && i != 0) tmpPath = fileNames[(fileNames[i].previous)].pathName;
-            fileNames[i].pathName = tmpPath;
+            if (nameList[i].previous != 0 && i != 0) tmpPath = nameList[(nameList[i].previous)].pathName;
+            nameList[i].pathName = tmpPath;
 
-            if (fileNames[i].next.s > 0) {
-                if (fileNames[i].fileName != "") {
-                    tmpPath += fileNames[i].fileName + "\\";
+            if (nameList[i].next.s > 0) {
+                if (nameList[i].fileName != "") {
+                    tmpPath += nameList[i].fileName + "\\";
                 }
             }
-
-            fileNames[i].fileName = fileNames[i].pathName + fileNames[i].fileName;
-            fileNames[i].crc = ttdatcrc::crc_fnv_1a_32(ttdatutil::to_upper(fileNames[i].fileName).c_str());
+            crcNameList[ttdatcrc::crc_fnv_1a_32(ttdatutil::to_upper(nameList[i].pathName + nameList[i].fileName).c_str())] = nameList[i].pathName + nameList[i].fileName;
         }
     }
 }
@@ -343,7 +346,7 @@ void TTDat::get_crc_size() {
         falsePositiveCheck = ttdatutil::get_int(infoFile, S_LONG, crcs32EndOffset);
     }
 
-    if (falsePositiveCheck == 0 || falsePositiveCheck == 9){  // 9 for The Force Awakens, otherwise the end of these lists are usually zero
+    if (falsePositiveCheck == 0 || falsePositiveCheck == 9){  // 9 for The Force Awakens, otherwise the long at the end of these lists is usually zero
         crc64 = false;
         return;
     }
@@ -367,6 +370,14 @@ void TTDat::get_crcs() {
         for (int i = 0; i < fileCount; i++) {
             fileList[i].nameCrc = ttdatutil::get_int(infoFile, intSize);
         }
+    }   
+}
+
+void TTDat::match_crcs() {
+    for (int i = 0; i < fileCount; i++){
+        if (crcNameList.find(fileList[i].nameCrc) != crcNameList.end()) {
+            fileList[i].fileName = crcNameList.at(fileList[i].nameCrc);
+        }
     }
-    
+
 }

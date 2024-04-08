@@ -29,7 +29,6 @@ struct LIBTTDAT_API fileData {
 struct LIBTTDAT_API fileName {
     std::string fileName;
     std::string pathName;
-    uint64_t crc;
     unsigned short previous;
     union {
         unsigned int u;
