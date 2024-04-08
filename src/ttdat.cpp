@@ -382,15 +382,15 @@ void TTDat::alloc_lists() {
     // There's probably a better way to do this, but this works.
     // Future error handling might render this function unneeded.
 
-    if (fileCount * sizeof(fileData) > 1073741824) {     // If fileCount would result in massive amounts of memory being allocated (something is wrong)
-        errorState = TTDAT_OFFSET_ERROR;                 // This is rudamentary error checking and a new system should be devised
+    if (fileCount * sizeof(fileData) > 1073741824) {
+        errorState = TTDAT_OFFSET_ERROR;
         return;
     }
 
     fileList = new fileData[fileCount];
 
-    if (fileNameCount * sizeof(fileName) > 1073741824) { // If fileNameCount would result in massive amounts of memory being allocated (something is wrong)
-        errorState = TTDAT_OFFSET_ERROR;   // This is rudamentary error checking and a new system should be devised
+    if (fileNameCount * sizeof(fileName) > 1073741824) {
+        errorState = TTDAT_OFFSET_ERROR;
         return;
     }
 
