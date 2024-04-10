@@ -281,11 +281,7 @@ void TTDat::get_file_offsets() {
         unsigned int offsetOr;
 
         for (unsigned int i = 0; i < fileCount; i++) {
-            if (infoType <= -13) {
-                fileList[i].filePacked = ttdatutil::get_int_be(infoFile, S_SHORT);
-                infoFile.ignore(S_SHORT);
-                fileList[i].fileOffset = ttdatutil::get_int_be(infoFile, S_LONG);
-            } else if (infoType <= -11) {
+            if (infoType <= -11) {
                 fileList[i].fileOffset = ttdatutil::get_int_be(infoFile, S_LONGLONG);
             } else {
                 fileList[i].fileOffset = ttdatutil::get_int_be(infoFile, S_LONG);
@@ -295,10 +291,11 @@ void TTDat::get_file_offsets() {
             fileList[i].fileSize = ttdatutil::get_int_be(infoFile, S_LONG);
 
             if (infoType <= -13) {
-                fileList[i].filePacked = fileList[i].filePacked ? 1 : 0;
+                fileList[i].filePacked = (fileList[i].fileOffset >> 56) ? 1 : 0; // This should be looked into. This seems to correlate with compression type
+                fileList[i].fileOffset &= 0xFFFFFFFFFFFFFFul;
             } else if (infoType <= -10) {
                 fileList[i].filePacked = (fileList[i].fileSize >> 31) ? 1 : 0;
-                fileList[i].fileSize &= 0x7FFFFFFF;
+                fileList[i].fileSize &= 0x7FFFFFFFul;
             } else {
                 fileList[i].filePacked = ttdatutil::get_int_be(infoFile, S_BYTE);
                 infoFile.ignore(S_SHORT);
