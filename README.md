@@ -13,7 +13,7 @@ After initial implementation, this library should provide similar functionality 
 
 Currently this library gathers the important offsets (but not all neccessary for repacking, etc.) and builds a complete file list with file offsets, names, compressed sizes, sizes, and compression state (There's likely more to discover here, packed could refer to exact decompression type in later dat versions). Further implementation will decipher each file's compression type (if present). Near future plans include bringing in decompression libraries and implementing file extraction and decompression methods.
 
-This is being written in C++20 with portability in mind. This will be ported to macOS once initial unpacking functionality is completed.
+This is being written in C++20 with portability in mind. Builds for Linux, Windows, and macOS.
 
 ### Building
 
@@ -33,7 +33,24 @@ Run the following in a terminal once you have met the requirements above:
     cd libttdat
     ./build-linux.sh
 
-There is no install target in the CMakeLists yet as this doesn't really do much.
+
+#### Building for macOS
+ 
+##### Requirements
+
+ 1. Xcode
+ 2. macOS (Tested with 12.6.8)
+ 3. CMake installed to path or symlinked in bin
+
+##### Building
+
+Run the following in a terminal once you have met the requirements above:
+Note: The linux build script works the same on macOS
+
+    git clone https://github.com/xmusjackson/libttdat.git
+    cd libttdat
+    ./build-linux.sh
+
 
 #### Building for Windows
  
@@ -51,8 +68,8 @@ Run the following in an MSVC Developer Powershell once you have met the requirem
     cd libttdat
     .\build-windows.ps1
 
-There is no install target in the CMakeLists yet as this doesn't really do much.
 
+There is no install target in the CMakeLists yet as this doesn't really do much.
 
 ### Testing
 
