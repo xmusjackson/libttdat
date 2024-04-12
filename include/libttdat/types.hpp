@@ -26,12 +26,12 @@ struct LIBTTDAT_API fileData {
     unsigned int filePacked;
 };
 
-struct LIBTTDAT_API fileName {
+struct LIBTTDAT_API fileNameData {
     std::string fileName;
     std::string pathName;
     unsigned short previous;
     union {
-        unsigned int u;
-        short s;
+        unsigned short u;
+        signed short s;
         } next;
 };

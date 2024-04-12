@@ -24,7 +24,7 @@ class LIBTTDAT_API TTDat {
         fileData* fileList;
         fileData* modFileList; /* Unused for now */
 
-        fileName* nameList;
+        fileNameData* nameList;
 
         loc infoLoc;
 

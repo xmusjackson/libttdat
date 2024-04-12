@@ -196,7 +196,7 @@ void TTDat::get_file_names() {
     std::ifstream& infoFile = ((infoLoc) ? hdrFile : datFile);
     unsigned int currOffset;
 
-    nameList = new fileName[fileNameCount];
+    nameList = new fileNameData[fileNameCount];
     
     if (newFormat) {
         /* New Format */
@@ -386,10 +386,10 @@ void TTDat::alloc_lists() {
 
     fileList = new fileData[fileCount];
 
-    if (fileNameCount * sizeof(fileName) > 1073741824) {
+    if (fileNameCount * sizeof(fileNameData) > 1073741824) {
         errorState = TTDAT_OFFSET_ERROR;
         return;
     }
 
-    nameList = new fileName[fileNameCount];
+    nameList = new fileNameData[fileNameCount];
 }
